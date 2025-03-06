@@ -1,24 +1,10 @@
-# Chatty Community Agents
+# Chatty AI Community Store
+
+![Chatty AICommunity Store Banner](./images/chatty_ai_community_store_banner.png)
+
+## About
 
 A collection of AI agent configurations for [Chatty AI](https://github.com/lucianoayres/chatty-ai) - a terminal app that enables engaging conversations with AI personalities ranging from historical figures to domain experts.
-
-## Project Structure
-
-```
-.
-├── agents/                  # YAML files containing agent configurations
-├── schemas/                 # JSON and YAML schema definitions
-│   ├── agent.schema.yaml   # Schema for individual agent YAML files
-│   └── index.schema.json   # Schema for the index.json file
-├── tools/                  # Project tooling
-│   └── agent_manager/     # Tool for managing agent configurations
-│       ├── manage_agents.sh    # Main entry point script
-│       └── src/               # Python source code
-│           ├── generator.py   # Index generation module
-│           ├── validator.py   # YAML validation module
-│           └── update_index.py # Main Python script
-└── index.json             # Generated index of all valid agents
-```
 
 ## Agent Configuration
 
@@ -95,6 +81,24 @@ It includes:
   - Description
   - Emoji
   - Creation timestamp
+
+## Project Structure
+
+```
+.
+├── agents/                  # YAML files containing agent configurations
+├── schemas/                 # JSON and YAML schema definitions
+│   ├── agent.schema.yaml   # Schema for individual agent YAML files
+│   └── index.schema.json   # Schema for the index.json file
+├── tools/                  # Project tooling
+│   └── agent_manager/     # Tool for managing agent configurations
+│       ├── manage_agents.sh    # Main entry point script
+│       └── src/               # Python source code
+│           ├── generator.py   # Index generation module
+│           ├── validator.py   # YAML validation module
+│           └── update_index.py # Main Python script
+└── index.json             # Generated index of all valid agents
+```
 
 ## Development
 
