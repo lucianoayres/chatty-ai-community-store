@@ -1,0 +1,8 @@
+# Required fields
+name: str(required=True, min=1, max=40) # Agent name, max 40 chars
+description: str(required=True, min=1, max=65) # Short, concise description
+emoji: regex(r'^.$', name='single emoji', required=True) # Exactly one character
+system_message: str(required=True, min=1, max=1500) # System message, max 1500 chars
+label_color: str(required=True, min=1, max=15) # Label color, max 15 chars
+text_color: str(required=True, min=1, max=15) # Text color, max 15 chars
+is_default: bool(required=True)
