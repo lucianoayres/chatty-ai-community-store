@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import yaml
+import json
 from typing import Dict, List, Set
 import os
 
@@ -14,10 +14,10 @@ class TagManager:
         self.tags = self._load_tags()
 
     def _load_tags(self) -> Dict:
-        """Load tags from YAML file."""
+        """Load tags from JSON file."""
         try:
             with open(self.tags_file, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f)
+                data = json.load(f)
                 if not isinstance(data, dict) or 'tags' not in data:
                     raise ValueError("Invalid tags file format")
                 return data['tags']
@@ -59,6 +59,6 @@ class TagManager:
         """
         matching_tags = []
         for tag_key, tag_info in self.tags.items():
-            if agent_name in tag_info.get('examples', []):
+            if 'examples' in tag_info and agent_name in tag_info['examples']:
                 matching_tags.append(tag_key)
         return matching_tags

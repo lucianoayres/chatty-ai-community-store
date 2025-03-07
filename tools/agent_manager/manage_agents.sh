@@ -7,6 +7,7 @@ VENV_DIR="$SCRIPT_DIR/venv"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 JSON_SCHEMA_PATH="$PROJECT_ROOT/schemas/index.schema.json"
 YAML_SCHEMA_PATH="$PROJECT_ROOT/schemas/agent.schema.yaml"
+TAG_DEFINITIONS_PATH="$PROJECT_ROOT/tags.json"
 
 # Create virtual environment if it doesn't exist
 if [ ! -d "$VENV_DIR" ]; then
@@ -34,11 +35,19 @@ if [ ! -f "$YAML_SCHEMA_PATH" ]; then
     exit 1
 fi
 
+if [ ! -f "$TAG_DEFINITIONS_PATH" ]; then
+    echo "Warning: Tag definitions file not found: $TAG_DEFINITIONS_PATH"
+    echo "Will use default location relative to schema path"
+    TAG_DEFINITIONS_ARG=""
+else
+    TAG_DEFINITIONS_ARG="--tag-definitions $TAG_DEFINITIONS_PATH"
+fi
+
 # Run the agent manager
 echo "Managing agents..."
 cd "$PROJECT_ROOT"  # Move to project root
 export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
-python3 "$SCRIPT_DIR/src/update_index.py" --schema "$JSON_SCHEMA_PATH" --yaml-schema "$YAML_SCHEMA_PATH"
+python3 "$SCRIPT_DIR/src/update_index.py" --schema "$JSON_SCHEMA_PATH" --yaml-schema "$YAML_SCHEMA_PATH" $TAG_DEFINITIONS_ARG
 
 # Deactivate virtual environment
 deactivate 

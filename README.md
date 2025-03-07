@@ -36,7 +36,7 @@ The `label_color` and `text_color` fields use ANSI escape codes for 256-color te
 The project includes a tool for managing agent configurations, located in [`tools/agent_manager/`](tools/agent_manager/). This tool ensures all agents are properly formatted for use in Chatty AI:
 
 1. Validates all agent YAML files against the schema
-2. Generates and updates the [`index.json`](index.json) file
+2. Generates and updates the [`agent_index.json`](agent_index.json) file
 3. Maintains creation timestamps for agents
 4. Reports validation errors and provides summaries
 
@@ -54,7 +54,7 @@ The tool will:
 - Create a Python virtual environment if needed
 - Install required dependencies
 - Validate all agent YAML files
-- Update the index.json file
+- Update the agent_index.json file
 - Provide a summary of changes
 
 ### Error Handling
@@ -65,7 +65,7 @@ The tool will:
 
 ## Index File
 
-The [`index.json`](index.json) file contains a list of all valid agents and is automatically maintained by the agent manager. This file is used by Chatty AI to:
+The [`agent_index.json`](agent_index.json) file contains a list of all valid agents and is automatically maintained by the agent manager. This file is used by Chatty AI to:
 
 - Load available agents
 - Display agent listings
@@ -89,7 +89,7 @@ It includes:
 ├── agents/                  # YAML files containing agent configurations
 ├── schemas/                 # JSON and YAML schema definitions
 │   ├── agent.schema.yaml   # Schema for individual agent YAML files
-│   └── index.schema.json   # Schema for the index.json file
+│   └── index.schema.json   # Schema for the agent_index.json file
 ├── tools/                  # Project tooling
 │   └── agent_manager/     # Tool for managing agent configurations
 │       ├── manage_agents.sh    # Main entry point script
@@ -97,7 +97,7 @@ It includes:
 │           ├── generator.py   # Index generation module
 │           ├── validator.py   # YAML validation module
 │           └── update_index.py # Main Python script
-└── index.json             # Generated index of all valid agents
+└── agent_index.json             # Generated index of all valid agents
 ```
 
 ## Development
@@ -121,7 +121,7 @@ It includes:
 ### Schema Updates
 
 - [`schemas/agent.schema.yaml`](schemas/agent.schema.yaml): Defines the structure for agent YAML files
-- [`schemas/index.schema.json`](schemas/index.schema.json): Defines the structure for the index file
+- [`schemas/index.schema.json`](schemas/index.schema.json): Defines the structure for the agent_index.json file
 - Both schemas are enforced by the agent manager tool
 
 ## Contributing
@@ -131,7 +131,7 @@ When contributing new agents or modifications:
 1. Ensure all YAML files follow the schema
 2. Run the agent manager tool to validate changes
 3. Check the error log if validation fails
-4. Verify the index.json is updated correctly
+4. Verify the agent_index.json is updated correctly
 5. Test new agents in Chatty AI before submitting
 
 ## License

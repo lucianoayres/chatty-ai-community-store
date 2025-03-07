@@ -1,0 +1,13 @@
+{
+  "storefrontSettings": {
+    "newItemsConfig": { "enabled": true, "maxItems": 10, "timeWindowDays": 30 },
+    "featuredItemsConfig": { "enabled": true, "maxItems": 5 },
+    "categories": [
+      { "name": "Featured", "description": "Handpicked items we recommend.", "tags": ["featured"] },
+      { "name": "New Arrivals", "description": "Latest products added to our store.", "tags": ["new"] },
+      { "name": "Electronics", "description": "Latest gadgets and electronic accessories.", "tags": ["electronics"] },
+      { "name": "Clothing", "description": "Fashionable apparel for men, women, and kids.", "tags": ["clothing"] },
+      { "name": "Books", "description": "A collection of books from various genres.", "tags": ["books"] }
+    ]
+  }
+}

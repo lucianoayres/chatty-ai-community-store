@@ -8,7 +8,7 @@ from jsonschema import validate, ValidationError
 
 
 class IndexGenerator:
-    """Generates and updates the index.json file."""
+    """Generates and updates the agent_index.json file."""
 
     def __init__(self, json_schema_path: str):
         """Initialize with path to JSON schema file."""
@@ -44,7 +44,7 @@ class IndexGenerator:
         # Load existing index if it exists
         existing_index = {}
         try:
-            with open('index.json', 'r', encoding='utf-8') as f:
+            with open('agent_index.json', 'r', encoding='utf-8') as f:
                 existing_index = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             existing_index = {"version": self.version,

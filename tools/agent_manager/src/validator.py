@@ -11,15 +11,25 @@ from tag_manager import TagManager
 
 
 class AgentValidator:
-    def __init__(self, yaml_schema_path: str, error_log_path: str = "sync_errors.log"):
-        """Initialize validator with schema and error log path."""
+    def __init__(self, yaml_schema_path: str, tag_definitions_path: str = None, error_log_path: str = "sync_errors.log"):
+        """Initialize validator with schema, tag definitions path, and error log path.
+
+        Args:
+            yaml_schema_path: Path to the YAML schema file for validation
+            tag_definitions_path: Path to the tag definitions JSON file. If None, will look for
+                                  'agent_tag_definitions.json' in the same directory as the schema.
+            error_log_path: Path to write error logs to
+        """
         self.error_log_path = error_log_path
         try:
             self.yaml_schema = yamale.make_schema(yaml_schema_path)
-            # Initialize tag manager with the tags file
-            tags_file = os.path.join(
-                os.path.dirname(yaml_schema_path), 'tags.yaml')
-            self.tag_manager = TagManager(tags_file)
+
+            # Use provided tag definitions path or default to looking in schema directory
+            if tag_definitions_path is None:
+                tag_definitions_path = os.path.join(
+                    os.path.dirname(yaml_schema_path), 'agent_tag_definitions.json')
+
+            self.tag_manager = TagManager(tag_definitions_path)
         except Exception as e:
             raise ValueError(f"Error initializing validator: {e}")
 

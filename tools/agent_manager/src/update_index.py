@@ -6,14 +6,19 @@ from validator import AgentValidator
 from generator import IndexGenerator
 
 
-def update_index(json_schema_path: str, yaml_schema_path: str) -> None:
+def update_index(json_schema_path: str, yaml_schema_path: str, tag_definitions_path: str = None) -> None:
     """
-    Update the index.json file based on the agent YAML files.
+    Update the agent_index.json file based on the agent YAML files.
     Part of the agent manager toolset that handles validation and indexing of agent configurations.
+
+    Args:
+        json_schema_path: Path to the JSON schema file for the index
+        yaml_schema_path: Path to the YAML schema file for agents
+        tag_definitions_path: Path to the tag definitions JSON file (optional)
     """
     try:
         # Initialize validator and generator
-        validator = AgentValidator(yaml_schema_path)
+        validator = AgentValidator(yaml_schema_path, tag_definitions_path)
         generator = IndexGenerator(json_schema_path)
 
         # Validate all YAML files
@@ -45,7 +50,7 @@ def update_index(json_schema_path: str, yaml_schema_path: str) -> None:
 
         # Save the updated index
         try:
-            generator.save_index(new_index, 'index.json')
+            generator.save_index(new_index, 'agent_index.json')
         except IOError as e:
             print(f"Error saving index: {e}", file=sys.stderr)
             sys.exit(1)
@@ -72,9 +77,11 @@ def main():
                         help='Path to JSON schema file')
     parser.add_argument('--yaml-schema', required=True,
                         help='Path to YAML schema file')
+    parser.add_argument('--tag-definitions', required=False,
+                        help='Path to tag definitions JSON file')
     args = parser.parse_args()
 
-    update_index(args.schema, args.yaml_schema)
+    update_index(args.schema, args.yaml_schema, args.tag_definitions)
 
 
 if __name__ == "__main__":
