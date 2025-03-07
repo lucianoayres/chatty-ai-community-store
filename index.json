@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "total_agents": 78,
+  "total_agents": 81,
   "files": [
     {
       "id": "amaterasu",
@@ -24,6 +24,19 @@
         "mythological"
       ],
       "author": "Luciano Ayres"
+    },
+    {
+      "id": "armstrong",
+      "name": "Louis Armstrong",
+      "filename": "armstrong.yaml",
+      "description": "Jazz pioneer and beloved cultural ambassador",
+      "emoji": "🎺",
+      "created_at": "2025-03-07T09:38:27Z",
+      "tags": [
+        "musicians",
+        "artists",
+        "creative"
+      ]
     },
     {
       "id": "athena",
@@ -55,11 +68,22 @@
       "filename": "beauvoir.yaml",
       "description": "Feminist philosopher analyzing gender and freedom",
       "emoji": "📚",
-      "created_at": "2025-03-07T00:30:52Z",
+      "created_at": "2025-03-07T09:41:42Z",
       "tags": [
-        "intellectual",
         "philosophers",
-        "writers"
+        "intellectuals"
+      ]
+    },
+    {
+      "id": "bernhardt",
+      "name": "Sarah Bernhardt",
+      "filename": "bernhardt.yaml",
+      "description": "Legendary French actress and theatrical innovator",
+      "emoji": "🎭",
+      "created_at": "2025-03-07T09:38:27Z",
+      "tags": [
+        "artists",
+        "creative"
       ]
     },
     {
@@ -128,7 +152,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual",
+        "intellectuals",
         "writers"
       ]
     },
@@ -169,6 +193,17 @@
       ]
     },
     {
+      "id": "chomsky",
+      "name": "Noam Chomsky",
+      "filename": "chomsky.yaml",
+      "description": "Revolutionary linguist and political critic",
+      "emoji": "🧠",
+      "created_at": "2025-03-07T09:41:42Z",
+      "tags": [
+        "intellectuals"
+      ]
+    },
+    {
       "id": "cinderella",
       "name": "Cinderella",
       "filename": "cinderella.yaml",
@@ -189,7 +224,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -201,7 +236,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -283,7 +318,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -355,7 +390,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -367,7 +402,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -476,7 +511,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -502,7 +537,7 @@
         "artists",
         "creative",
         "scientists",
-        "intellectual",
+        "intellectuals",
         "cultural"
       ]
     },
@@ -539,7 +574,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -591,7 +626,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual",
+        "intellectuals",
         "creative",
         "cultural"
       ]
@@ -630,7 +665,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -658,7 +693,7 @@
         "cultural",
         "historical",
         "writers",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -768,7 +803,7 @@
       "created_at": "2025-03-07T08:36:53Z",
       "tags": [
         "scientists",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -794,7 +829,7 @@
         "scientists",
         "creative",
         "cultural",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -805,7 +840,7 @@
       "emoji": "📖",
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
-        "intellectual",
+        "intellectuals",
         "writers"
       ]
     },
@@ -818,7 +853,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual",
+        "intellectuals",
         "writers"
       ]
     },
@@ -866,7 +901,7 @@
       "created_at": "2025-03-07T00:30:52Z",
       "tags": [
         "philosophers",
-        "intellectual",
+        "intellectuals",
         "cultural"
       ]
     },
@@ -903,7 +938,7 @@
       "tags": [
         "writers",
         "cultural",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {
@@ -939,7 +974,7 @@
       "tags": [
         "writers",
         "cultural",
-        "intellectual"
+        "intellectuals"
       ]
     },
     {

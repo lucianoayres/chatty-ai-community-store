@@ -65,6 +65,7 @@ class AgentValidator:
                             f"Suggested tags for {data['name']}: {', '.join(suggested_tags)}")
 
                 # Rewrite the file with consistent field ordering
+                # Only write the file if validation was successful
                 YAMLWriter.write_file(filepath, data)
                 return data, True
 

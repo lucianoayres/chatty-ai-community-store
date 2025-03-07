@@ -17,7 +17,7 @@ tags:
     description: "Characters from literature, mythology, and entertainment"
     examples: ["Literary Characters", "Mythological Beings", "Folk Heroes"]
 
-  intellectual:
+  intellectuals:
     name: "Intellectual"
     description: "Focused on scholarly research and intellectual pursuits"
     examples: ["Scientists", "Philosophers", "Researchers"]

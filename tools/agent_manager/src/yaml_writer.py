@@ -35,9 +35,9 @@ class YAMLWriter:
     @staticmethod
     def _should_use_literal_block(value: str, field_name: str) -> bool:
         """Determine if a string should use the literal block style (|)."""
-        # Always use literal block style for system_message
+        # Never use literal block style for system_message field
         if field_name == 'system_message':
-            return True
+            return False
         # For other fields, use literal block if multiline or long
         return '\n' in value or len(value) > 80
 
@@ -103,6 +103,10 @@ class YAMLWriter:
     @staticmethod
     def write_file(filepath: str, data: Dict) -> None:
         """Write data to a YAML file with consistent field ordering and formatting."""
+        # Early return if data is None to prevent clearing files
+        if data is None:
+            raise IOError("Cannot write None data to YAML file")
+
         try:
             # Register the literal string presenter
             yaml.add_representer(
