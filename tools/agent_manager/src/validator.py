@@ -36,6 +36,19 @@ class AgentValidator:
     def validate_yaml(self, filepath: str) -> Tuple[Dict, bool]:
         """Validate a single YAML file against schema."""
         try:
+            # First, check if the system_message uses literal block style in the original file
+            original_content = ""
+            with open(filepath, 'r', encoding='utf-8') as f:
+                original_content = f.read()
+
+            # Better detection of literal block style for system_message
+            uses_literal_style = False
+            import re
+            # Match system_message: | with possible whitespace
+            if re.search(r'system_message\s*:\s*\|', original_content):
+                uses_literal_style = True
+
+            # Load and validate the YAML content
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
 
@@ -64,9 +77,13 @@ class AgentValidator:
                         print(
                             f"Suggested tags for {data['name']}: {', '.join(suggested_tags)}")
 
-                # Rewrite the file with consistent field ordering
                 # Only write the file if validation was successful
-                YAMLWriter.write_file(filepath, data)
+                # Pass the information about the original literal style
+                if 'system_message' in data:
+                    YAMLWriter.write_file(
+                        filepath, data, system_message_literal_style=uses_literal_style)
+                else:
+                    YAMLWriter.write_file(filepath, data)
                 return data, True
 
             except ValueError as e:
