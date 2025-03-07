@@ -6,6 +6,8 @@ from typing import Dict, List, Tuple
 from datetime import datetime, timezone
 import os
 import sys
+from yaml_writer import YAMLWriter
+from tag_manager import TagManager
 
 
 class AgentValidator:
@@ -14,8 +16,12 @@ class AgentValidator:
         self.error_log_path = error_log_path
         try:
             self.yaml_schema = yamale.make_schema(yaml_schema_path)
+            # Initialize tag manager with the tags file
+            tags_file = os.path.join(
+                os.path.dirname(yaml_schema_path), 'tags.yaml')
+            self.tag_manager = TagManager(tags_file)
         except Exception as e:
-            raise ValueError(f"Error loading YAML schema: {e}")
+            raise ValueError(f"Error initializing validator: {e}")
 
     def log_error(self, filename: str, error: str) -> None:
         """Log an error with timestamp."""
@@ -38,8 +44,30 @@ class AgentValidator:
                 return None, False
 
             try:
+                # Validate against schema
                 yamale.validate(self.yaml_schema, [(data, filepath)])
+
+                # Validate tags
+                if 'tags' in data:
+                    if not self.tag_manager.validate_tags(data['tags']):
+                        invalid_tags = [t for t in data['tags']
+                                        if t not in self.tag_manager.get_valid_tags()]
+                        self.log_error(
+                            filepath, f"Invalid tags: {', '.join(invalid_tags)}")
+                        return None, False
+
+                # Suggest tags if none provided
+                if 'tags' not in data and 'name' in data:
+                    suggested_tags = self.tag_manager.get_tags_by_example(
+                        data['name'])
+                    if suggested_tags:
+                        print(
+                            f"Suggested tags for {data['name']}: {', '.join(suggested_tags)}")
+
+                # Rewrite the file with consistent field ordering
+                YAMLWriter.write_file(filepath, data)
                 return data, True
+
             except ValueError as e:
                 self.log_error(
                     filepath, f"YAML schema validation error: {str(e)}")

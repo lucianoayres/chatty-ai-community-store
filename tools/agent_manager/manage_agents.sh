@@ -37,7 +37,8 @@ fi
 # Run the agent manager
 echo "Managing agents..."
 cd "$PROJECT_ROOT"  # Move to project root
-PYTHONPATH="$SCRIPT_DIR" python3 "$SCRIPT_DIR/src/update_index.py" --schema "$JSON_SCHEMA_PATH" --yaml-schema "$YAML_SCHEMA_PATH"
+export PYTHONPATH="$SCRIPT_DIR/src:$PYTHONPATH"
+python3 "$SCRIPT_DIR/src/update_index.py" --schema "$JSON_SCHEMA_PATH" --yaml-schema "$YAML_SCHEMA_PATH"
 
 # Deactivate virtual environment
 deactivate 

@@ -2,8 +2,8 @@
 
 import sys
 import argparse
-from src.validator import AgentValidator
-from src.generator import IndexGenerator
+from validator import AgentValidator
+from generator import IndexGenerator
 
 
 def update_index(json_schema_path: str, yaml_schema_path: str) -> None:

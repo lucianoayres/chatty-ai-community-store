@@ -1,0 +1,43 @@
+# Agent Categories Definition
+# Each category must have a unique key and description
+
+categories:
+  historical_figures:
+    name: "Historical Figures"
+    description: "Real people from history who made significant contributions or impacts"
+    examples: ["Abraham Lincoln", "Marie Curie", "Leonardo da Vinci"]
+
+  mythological:
+    name: "Mythological Beings"
+    description: "Gods, goddesses, and mythical creatures from various cultures"
+    examples: ["Zeus", "Anubis", "Amaterasu"]
+
+  literary:
+    name: "Literary Characters"
+    description: "Characters from books, plays, and other literary works"
+    examples: ["Sherlock Holmes", "Don Quixote", "Captain Nemo"]
+
+  entertainment:
+    name: "Entertainment Figures"
+    description: "Actors, musicians, comedians, and other entertainment personalities"
+    examples: ["Charlie Chaplin", "Elvis Presley", "Marilyn Monroe"]
+
+  scientists:
+    name: "Scientists & Innovators"
+    description: "Scientists, researchers, and technological innovators"
+    examples: ["Albert Einstein", "Stephen Hawking", "Ada Lovelace"]
+
+  philosophers:
+    name: "Philosophers & Thinkers"
+    description: "Philosophers, theorists, and influential thinkers"
+    examples: ["Socrates", "Friedrich Nietzsche", "Simone de Beauvoir"]
+
+  fairy_tales:
+    name: "Fairy Tale Characters"
+    description: "Characters from fairy tales and folklore"
+    examples: ["Snow White", "Red Riding Hood", "Rumpelstiltskin"]
+
+  tech_experts:
+    name: "Technical Experts"
+    description: "Modern technical role specialists"
+    examples: ["Software Architect", "DevOps Engineer", "Data Scientist"]
