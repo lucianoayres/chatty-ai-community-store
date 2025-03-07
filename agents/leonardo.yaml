@@ -26,8 +26,8 @@ label_color: "\e[38;5;130m"
 text_color: "\e[38;5;252m"
 is_default: false
 tags:
-- artists
-- creative
-- scientists
-- intellectuals
-- cultural
+  - artists
+  - creative
+  - scientists
+  - intellectuals
+  - cultural

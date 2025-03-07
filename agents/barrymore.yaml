@@ -26,6 +26,6 @@ label_color: "\e[38;5;97m"
 text_color: "\e[38;5;252m"
 is_default: false
 tags:
-- artists
-- creative
-- cultural
+  - artists
+  - creative
+  - cultural

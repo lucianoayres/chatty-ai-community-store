@@ -103,6 +103,17 @@ class YAMLWriter:
         return ordered_data
 
     @staticmethod
+    def _format_tags(tags_list):
+        """Format tags list with proper indentation."""
+        if not tags_list:
+            return "tags: []"
+
+        result = "tags:"
+        for tag in tags_list:
+            result += f"\n  - {tag}"
+        return result
+
+    @staticmethod
     def write_file(filepath: str, data: Dict, system_message_literal_style=None) -> None:
         """Write data to a YAML file with consistent field ordering and formatting."""
         # Early return if data is None to prevent clearing files
@@ -110,21 +121,33 @@ class YAMLWriter:
             raise IOError("Cannot write None data to YAML file")
 
         try:
-            # Determine field order (to properly place system_message when writing)
-            field_order = []
-            for field in YAMLWriter.FIELD_ORDER:
-                if field != 'system_message' and field in data:
-                    field_order.append(field)
+            # Create a new OrderedDict to maintain field order exactly as specified in FIELD_ORDER
+            final_output = OrderedDict()
 
-            # Special handling for system_message to preserve its original format
-            system_message = None
-            if 'system_message' in data and system_message_literal_style is True:
-                system_message = data['system_message']
-                # Create a temporary copy without system_message for normal processing
-                data_copy = {k: v for k, v in data.items() if k !=
-                             'system_message'}
-            else:
-                data_copy = data
+            # Process each field in the specified order
+            for field in YAMLWriter.FIELD_ORDER:
+                if field in data:
+                    if field == 'tags' and isinstance(data['tags'], list):
+                        # Skip tags for now, we'll handle them specially later
+                        pass
+                    elif field == 'system_message' and system_message_literal_style is True:
+                        # Skip system_message for now if it should use literal style
+                        pass
+                    else:
+                        # Normal processing for all other fields
+                        value = data[field]
+                        if isinstance(value, str):
+                            # Normalize line breaks for system_message field
+                            if field == 'system_message':
+                                value = YAMLWriter._normalize_line_breaks(
+                                    value)
+                            # Check if literal block style should be used
+                            if YAMLWriter._should_use_literal_block(value, field, system_message_literal_style):
+                                final_output[field] = LiteralString(value)
+                            else:
+                                final_output[field] = value
+                        else:
+                            final_output[field] = value
 
             # Register the literal string presenter
             yaml.add_representer(
@@ -138,214 +161,71 @@ class YAMLWriter:
                 Dumper=yaml.SafeDumper
             )
 
-            # Prepare the data
-            prepared_data = YAMLWriter._prepare_data(
-                data_copy, system_message_literal_style)
-
-            # Instead of using temp files and complex logic, let's build the YAML directly
-            # This gives us precise control over newlines
-
-            # Start with an empty string
+            # Build a manually formatted YAML string to ensure proper order and formatting
             yaml_content = ""
 
-            # Add fields before system_message
-            if 'system_message' in data:
-                # Find where system_message should be in the order
-                system_message_index = YAMLWriter.FIELD_ORDER.index(
-                    'system_message')
+            # First write all normal fields (not tags or system_message with literal style)
+            temp_output = OrderedDict()
+            for field, value in final_output.items():
+                temp_output[field] = value
 
-                # Create ordered data for fields before system_message
-                before_system = OrderedDict()
-                for field in YAMLWriter.FIELD_ORDER:
-                    if field == 'system_message':
-                        break
-                    if field in prepared_data:
-                        before_system[field] = prepared_data[field]
-
-                # Create ordered data for fields after system_message
-                after_system = OrderedDict()
-                system_found = False
-                for field in YAMLWriter.FIELD_ORDER:
-                    if field == 'system_message':
-                        system_found = True
-                        continue
-                    if system_found and field in prepared_data:
-                        after_system[field] = prepared_data[field]
-
-                # Write system_message with the | style manually
-                normalized_message = YAMLWriter._normalize_line_breaks(
-                    system_message)
-
-                # Convert to YAML string
-                before_yaml = yaml.safe_dump(
-                    before_system,
+            if temp_output:
+                yaml_content = yaml.safe_dump(
+                    temp_output,
                     allow_unicode=True,
                     default_flow_style=False,
                     width=float('inf'),
                     indent=2,
                     sort_keys=False
-                ).rstrip()  # Remove trailing newlines
+                ).rstrip()
 
-                yaml_content += before_yaml
+            # Now manually add any special fields in the correct position
+            final_content = []
 
-                # Add exactly one newline if we have content
-                if before_yaml:
-                    yaml_content += "\n"
+            for field in YAMLWriter.FIELD_ORDER:
+                if field == 'system_message' and 'system_message' in data and system_message_literal_style is True:
+                    # Add system_message with literal block style
+                    system_message = data['system_message']
+                    normalized_message = YAMLWriter._normalize_line_breaks(
+                        system_message)
 
-                # Add system_message with literal block style
-                yaml_content += "system_message: |"
+                    system_content = "system_message: |"
+                    for line in normalized_message.split('\n'):
+                        system_content += f"\n  {line}"
 
-                # Process the message content
-                lines = normalized_message.split('\n')
+                    final_content.append(system_content)
 
-                # Write all lines with proper indentation (simplest approach)
-                for line in lines:
-                    yaml_content += f"\n  {line}"
+                elif field == 'tags' and 'tags' in data and isinstance(data['tags'], list):
+                    # Add tags with proper indentation
+                    tags_content = data['tags']
+                    tags_formatted = YAMLWriter._format_tags(tags_content)
+                    final_content.append(tags_formatted)
 
-                # Add fields after system_message
-                if after_system:
-                    # Add exactly one newline before the next field
-                    yaml_content += "\n"
+                elif field in final_output:
+                    # Extract this field from the yaml_content
+                    field_pattern = f"{field}:"
+                    lines = yaml_content.split('\n')
+                    field_content = []
 
-                    # Convert to YAML string
-                    after_yaml = yaml.safe_dump(
-                        after_system,
-                        allow_unicode=True,
-                        default_flow_style=False,
-                        width=float('inf'),
-                        indent=2,
-                        sort_keys=False
-                    )
+                    found = False
+                    for i, line in enumerate(lines):
+                        if line.startswith(field_pattern):
+                            found = True
+                            field_content.append(line)
 
-                    # Add the after content
-                    yaml_content += after_yaml
-            else:
-                # Normal processing for everything else
-                yaml_content = yaml.safe_dump(
-                    prepared_data,
-                    allow_unicode=True,
-                    default_flow_style=False,
-                    width=float('inf'),  # Prevent line wrapping
-                    indent=2,
-                    sort_keys=False  # Don't sort keys, maintain our order
-                )
+                            # Also add any indented lines that follow this field
+                            j = i + 1
+                            while j < len(lines) and (lines[j].startswith('  ') or not lines[j].strip()):
+                                field_content.append(lines[j])
+                                j += 1
+
+                    if found:
+                        final_content.append('\n'.join(field_content))
 
             # Write the final content to the file
             with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(yaml_content)
-        except Exception as e:
-            # If we have a system_message that should use literal style
-            if system_message is not None:
-                # We need to write all fields in the correct order
-                # Find where system_message should be in the order
-                system_message_index = YAMLWriter.FIELD_ORDER.index(
-                    'system_message')
+                f.write('\n'.join(final_content))
+                f.write('\n')  # End file with newline
 
-                # Create ordered data for fields before system_message
-                before_system = OrderedDict()
-                for field in YAMLWriter.FIELD_ORDER:
-                    if field == 'system_message':
-                        break
-                    if field in prepared_data:
-                        before_system[field] = prepared_data[field]
-
-                # Create ordered data for fields after system_message
-                after_system = OrderedDict()
-                system_found = False
-                for field in YAMLWriter.FIELD_ORDER:
-                    if field == 'system_message':
-                        system_found = True
-                        continue
-                    if system_found and field in prepared_data:
-                        after_system[field] = prepared_data[field]
-
-                # Write system_message with the | style manually
-                normalized_message = YAMLWriter._normalize_line_breaks(
-                    system_message)
-
-                # Rather than manually handling field formatting, let's create temporary files
-                # and concatenate them to have precise control over spacing
-
-                # Create temp files for each section
-                temp_before = None
-                temp_after = None
-
-                if before_system:
-                    temp_before = tempfile.NamedTemporaryFile(
-                        mode='w+', delete=False)
-                    yaml.safe_dump(
-                        before_system,
-                        temp_before,
-                        allow_unicode=True,
-                        default_flow_style=False,
-                        width=float('inf'),
-                        indent=2,
-                        sort_keys=False,
-                        explicit_end=False,
-                        explicit_start=False
-                    )
-                    temp_before.close()
-
-                if after_system:
-                    temp_after = tempfile.NamedTemporaryFile(
-                        mode='w+', delete=False)
-                    yaml.safe_dump(
-                        after_system,
-                        temp_after,
-                        allow_unicode=True,
-                        default_flow_style=False,
-                        width=float('inf'),
-                        indent=2,
-                        sort_keys=False,
-                        explicit_end=False,
-                        explicit_start=False
-                    )
-                    temp_after.close()
-
-                # Now write the final file with exact control over spacing
-                with open(filepath, 'w', encoding='utf-8') as final_file:
-                    # Write fields before system_message
-                    if temp_before:
-                        with open(temp_before.name, 'r') as before_file:
-                            content = before_file.read().rstrip('\n')
-                            final_file.write(content)
-                            if content:  # Only add newline if there was content
-                                final_file.write('\n')
-
-                    # Write system_message with exact formatting - ensure no trailing blank line
-                    final_file.write('system_message: |')
-
-                    # Process the message content
-                    lines = normalized_message.split('\n')
-
-                    # Write all lines with proper indentation (simplest approach)
-                    for line in lines:
-                        final_file.write(f"\n  {line}")
-
-                    # Add fields after system_message
-                    if temp_after:
-                        # Read the after content
-                        with open(temp_after.name, 'r') as after_file:
-                            content = after_file.read().strip()
-                            if content:  # Only if there's actual content
-                                # Add exactly one newline to separate fields
-                                final_file.write('\n')
-                                final_file.write(content)
-                # Clean up temp files
-                if temp_before:
-                    os.unlink(temp_before.name)
-                if temp_after:
-                    os.unlink(temp_after.name)
-            else:
-                # Normal processing for everything else
-                yaml.safe_dump(
-                    prepared_data,
-                    f,
-                    allow_unicode=True,
-                    default_flow_style=False,
-                    width=float('inf'),  # Prevent line wrapping
-                    indent=2,
-                    sort_keys=False  # Don't sort keys, maintain our order
-                )
         except Exception as e:
             raise IOError(f"Error writing YAML file: {e}")

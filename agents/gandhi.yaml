@@ -31,5 +31,5 @@ label_color: "\e[38;5;34m"
 text_color: "\e[38;5;252m"
 is_default: false
 tags:
-- historical
-- cultural
+  - historical
+  - cultural
