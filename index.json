@@ -8,7 +8,7 @@
       "filename": "amaterasu.yaml",
       "description": "Japanese sun goddess illuminating heaven and earth",
       "emoji": "🌅",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "anubis",
@@ -16,7 +16,8 @@
       "filename": "anubis.yaml",
       "description": "Egyptian god guiding souls to judgment",
       "emoji": "🐺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z",
+      "author": "Luciano Ayres"
     },
     {
       "id": "armstrong",
@@ -24,7 +25,7 @@
       "filename": "armstrong.yaml",
       "description": "Jazz pioneer and beloved cultural ambassador",
       "emoji": "🎺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "athena",
@@ -32,7 +33,7 @@
       "filename": "athena.yaml",
       "description": "Goddess of wisdom and strategic warfare",
       "emoji": "🦉",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "barrymore",
@@ -40,7 +41,7 @@
       "filename": "barrymore.yaml",
       "description": "The Great Profile of America's theatrical dynasty",
       "emoji": "🎬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "beauvoir",
@@ -48,7 +49,7 @@
       "filename": "beauvoir.yaml",
       "description": "Feminist philosopher analyzing gender and freedom",
       "emoji": "📚",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "bernhardt",
@@ -56,7 +57,7 @@
       "filename": "bernhardt.yaml",
       "description": "Legendary French actress and first global star",
       "emoji": "⭐",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "big_bad_wolf",
@@ -64,7 +65,7 @@
       "filename": "big_bad_wolf.yaml",
       "description": "Cunning forest dweller and master of deception",
       "emoji": "🐺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "billy_the_kid",
@@ -72,7 +73,7 @@
       "filename": "billy_the_kid.yaml",
       "description": "Old West figure offering frontier era insights",
       "emoji": "🤠",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "blackbeard",
@@ -80,7 +81,7 @@
       "filename": "blackbeard.yaml",
       "description": "Colonial era maritime figure with historical insights",
       "emoji": "⚓",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "bonnie_parker",
@@ -88,7 +89,7 @@
       "filename": "bonnie_parker.yaml",
       "description": "Depression era figure analyzing 1930s society",
       "emoji": "📰",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "brando",
@@ -96,7 +97,7 @@
       "filename": "brando.yaml",
       "description": "Revolutionary method actor who transformed cinema",
       "emoji": "🎭",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "camus",
@@ -104,7 +105,7 @@
       "filename": "camus.yaml",
       "description": "Absurdist philosopher celebrating human dignity",
       "emoji": "🚬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "capone",
@@ -112,7 +113,7 @@
       "filename": "capone.yaml",
       "description": "Prohibition era figure offering historical insights",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "captain_nemo",
@@ -120,7 +121,7 @@
       "filename": "captain_nemo.yaml",
       "description": "Mysterious submarine captain and scientific genius",
       "emoji": "🌊",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "chaplin",
@@ -128,7 +129,7 @@
       "filename": "chaplin.yaml",
       "description": "Silent film genius and revolutionary filmmaker",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "chomsky",
@@ -136,7 +137,7 @@
       "filename": "chomsky.yaml",
       "description": "Linguist and critic analyzing language and power",
       "emoji": "📢",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "cinderella",
@@ -144,7 +145,7 @@
       "filename": "cinderella.yaml",
       "description": "Kind-hearted maiden whose grace transformed her life",
       "emoji": "👠",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "curie",
@@ -152,7 +153,7 @@
       "filename": "curie.yaml",
       "description": "Pioneering physicist and chemist, double Nobel laureate",
       "emoji": "🧪",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "darwin",
@@ -160,7 +161,7 @@
       "filename": "darwin.yaml",
       "description": "Revolutionary naturalist who developed the theory of evolution",
       "emoji": "🔬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "data_scientist",
@@ -168,7 +169,7 @@
       "filename": "data_scientist.yaml",
       "description": "Data scientist specializing in machine learning and analytics",
       "emoji": "📊",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "davis",
@@ -176,7 +177,7 @@
       "filename": "davis.yaml",
       "description": "Legendary actress known for intensity and craft",
       "emoji": "🎬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "devops_engineer",
@@ -184,7 +185,7 @@
       "filename": "devops_engineer.yaml",
       "description": "DevOps specialist focused on automation and reliability",
       "emoji": "🔄",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "dickinson",
@@ -192,7 +193,7 @@
       "filename": "dickinson.yaml",
       "description": "Reclusive poet exploring nature, death, and immortality",
       "emoji": "🌸",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "don_corleone",
@@ -200,7 +201,7 @@
       "filename": "don_corleone.yaml",
       "description": "Wise patriarch discussing family and honor",
       "emoji": "🌹",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "evil_queen",
@@ -208,7 +209,7 @@
       "filename": "evil_queen.yaml",
       "description": "Powerful queen exploring beauty and authority",
       "emoji": "👑",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "foucault",
@@ -216,7 +217,7 @@
       "filename": "foucault.yaml",
       "description": "Post-structuralist analyzing power and knowledge",
       "emoji": "🔍",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "franklin",
@@ -224,7 +225,7 @@
       "filename": "franklin.yaml",
       "description": "Pioneering crystallographer who revealed DNA's structure",
       "emoji": "🧬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "frida",
@@ -232,7 +233,7 @@
       "filename": "frida.yaml",
       "description": "Revolutionary Mexican artist known for powerful self-expression",
       "emoji": "🎨",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "garbo",
@@ -240,7 +241,7 @@
       "filename": "garbo.yaml",
       "description": "Enigmatic star of Hollywood's Golden Age",
       "emoji": "🎬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "george_carlin",
@@ -248,7 +249,7 @@
       "filename": "george_carlin.yaml",
       "description": "Counter-cultural comedian questioning everything",
       "emoji": "🎤",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "groucho_marx",
@@ -256,7 +257,7 @@
       "filename": "groucho_marx.yaml",
       "description": "Quick-witted master of comedic wordplay",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "hawking",
@@ -264,7 +265,7 @@
       "filename": "hawking.yaml",
       "description": "Brilliant cosmologist who explored universe's mysteries",
       "emoji": "🌌",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "heisenberg",
@@ -272,7 +273,7 @@
       "filename": "heisenberg.yaml",
       "description": "Quantum pioneer who formulated the uncertainty principle",
       "emoji": "⚡",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "hepburn",
@@ -280,7 +281,7 @@
       "filename": "hepburn.yaml",
       "description": "Legendary actress known for independence and wit",
       "emoji": "🎭",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "holiday",
@@ -288,7 +289,7 @@
       "filename": "holiday.yaml",
       "description": "Lady Day, who revolutionized jazz vocals",
       "emoji": "🎤",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "isis",
@@ -296,7 +297,7 @@
       "filename": "isis.yaml",
       "description": "Egyptian goddess of magic and motherhood",
       "emoji": "👑",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "jack_the_ripper",
@@ -304,7 +305,7 @@
       "filename": "jack_the_ripper.yaml",
       "description": "Victorian era figure analyzing 1880s London society",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "jackie_robinson",
@@ -312,7 +313,7 @@
       "filename": "jackie_robinson.yaml",
       "description": "Baseball pioneer who broke the color barrier",
       "emoji": "⚾",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "jesse_owens",
@@ -320,7 +321,7 @@
       "filename": "jesse_owens.yaml",
       "description": "Olympic legend who challenged racial prejudice",
       "emoji": "🏃",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "jesus",
@@ -328,7 +329,7 @@
       "filename": "jesus.yaml",
       "description": "Spiritual teacher who transformed human history",
       "emoji": "🙏",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "kali",
@@ -336,7 +337,7 @@
       "filename": "kali.yaml",
       "description": "Hindu goddess of time and transformation",
       "emoji": "🌙",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "kant",
@@ -344,7 +345,7 @@
       "filename": "kant.yaml",
       "description": "Enlightenment philosopher who revolutionized human reason",
       "emoji": "📖",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "kennedy",
@@ -352,7 +353,7 @@
       "filename": "kennedy.yaml",
       "description": "35th President who inspired the New Frontier",
       "emoji": "🌟",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "leonardo",
@@ -360,7 +361,7 @@
       "filename": "leonardo.yaml",
       "description": "Renaissance polymath combining art, science, and innovation",
       "emoji": "🎨",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "lincoln",
@@ -368,7 +369,7 @@
       "filename": "lincoln.yaml",
       "description": "16th President who preserved the Union and ended slavery",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "loki",
@@ -376,7 +377,7 @@
       "filename": "loki.yaml",
       "description": "Norse trickster god weaving chaos and truth",
       "emoji": "🎭",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "lucille_ball",
@@ -384,7 +385,7 @@
       "filename": "lucille_ball.yaml",
       "description": "Television pioneer mastering comedy and business",
       "emoji": "📺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "mcclintock",
@@ -392,7 +393,7 @@
       "filename": "mcclintock.yaml",
       "description": "Pioneering geneticist who discovered jumping genes",
       "emoji": "🌽",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "merlin",
@@ -400,7 +401,7 @@
       "filename": "merlin.yaml",
       "description": "Legendary wizard who lives backwards through time",
       "emoji": "🧙",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "mozart",
@@ -408,7 +409,7 @@
       "filename": "mozart.yaml",
       "description": "Musical genius who defined the Classical era",
       "emoji": "🎹",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "muhammad_ali",
@@ -416,7 +417,7 @@
       "filename": "muhammad_ali.yaml",
       "description": "The Greatest - legendary boxer and social activist",
       "emoji": "🥊",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "nietzsche",
@@ -424,7 +425,7 @@
       "filename": "nietzsche.yaml",
       "description": "Revolutionary philosopher revaluating all values",
       "emoji": "⚡",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "odin",
@@ -432,7 +433,7 @@
       "filename": "odin.yaml",
       "description": "Allfather of Norse gods seeking eternal wisdom",
       "emoji": "🔮",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "olivier",
@@ -440,7 +441,7 @@
       "filename": "olivier.yaml",
       "description": "Greatest classical actor of the 20th century",
       "emoji": "🎪",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "pauling",
@@ -448,7 +449,7 @@
       "filename": "pauling.yaml",
       "description": "Revolutionary chemist and peace activist, double Nobel laureate",
       "emoji": "🧬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "pele",
@@ -456,7 +457,7 @@
       "filename": "pele.yaml",
       "description": "The King of Football - global sport ambassador",
       "emoji": "⚽",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "poe",
@@ -464,7 +465,7 @@
       "filename": "poe.yaml",
       "description": "Master of gothic horror and psychological tales",
       "emoji": "🦅",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "presley",
@@ -472,7 +473,7 @@
       "filename": "presley.yaml",
       "description": "The King of Rock and Roll who changed popular music",
       "emoji": "👑",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "product_manager",
@@ -480,7 +481,7 @@
       "filename": "product_manager.yaml",
       "description": "Product manager bridging user needs and technology",
       "emoji": "📱",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "rapunzel",
@@ -488,7 +489,7 @@
       "filename": "rapunzel.yaml",
       "description": "Creative spirit who found freedom through courage",
       "emoji": "🏰",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "red_riding_hood",
@@ -496,7 +497,7 @@
       "filename": "red_riding_hood.yaml",
       "description": "Forest traveler who learned wisdom from danger",
       "emoji": "🧺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "richard_pryor",
@@ -504,7 +505,7 @@
       "filename": "richard_pryor.yaml",
       "description": "Revolutionary comedian speaking raw truth",
       "emoji": "🎭",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "rick_blaine",
@@ -512,7 +513,7 @@
       "filename": "rick_blaine.yaml",
       "description": "Cynical expatriate with a noble heart from Casablanca",
       "emoji": "🎲",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "ripley",
@@ -520,7 +521,7 @@
       "filename": "ripley.yaml",
       "description": "Resourceful survivor and space warrant officer",
       "emoji": "🚀",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "roosevelt",
@@ -528,7 +529,7 @@
       "filename": "roosevelt.yaml",
       "description": "32nd President who led through Depression and WWII",
       "emoji": "🦅",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "rumpelstiltskin",
@@ -536,7 +537,7 @@
       "filename": "rumpelstiltskin.yaml",
       "description": "Magical dealmaker who spins straw into gold",
       "emoji": "🎭",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "sagan",
@@ -544,7 +545,7 @@
       "filename": "sagan.yaml",
       "description": "Beloved astronomer who shared cosmos's wonders",
       "emoji": "🌠",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "said",
@@ -552,7 +553,7 @@
       "filename": "said.yaml",
       "description": "Post-colonial theorist analyzing cultural power",
       "emoji": "📖",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "sartre",
@@ -560,7 +561,7 @@
       "filename": "sartre.yaml",
       "description": "Existentialist philosopher exploring human freedom",
       "emoji": "🚬",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "sea_witch",
@@ -568,7 +569,7 @@
       "filename": "sea_witch.yaml",
       "description": "Ocean sorceress specializing in magical contracts",
       "emoji": "🐙",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "security_expert",
@@ -576,7 +577,7 @@
       "filename": "security_expert.yaml",
       "description": "Cybersecurity expert specializing in system protection",
       "emoji": "🔒",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "snow_white",
@@ -584,7 +585,7 @@
       "filename": "snow_white.yaml",
       "description": "Pure-hearted princess who leads through kindness",
       "emoji": "🍎",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "socrates",
@@ -592,7 +593,7 @@
       "filename": "socrates.yaml",
       "description": "Ancient Greek philosopher who uses questioning to uncover truth",
       "emoji": "🏺",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "software_architect",
@@ -600,7 +601,7 @@
       "filename": "software_architect.yaml",
       "description": "Experienced architect specializing in scalable system design",
       "emoji": "🌐",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "sun_wukong",
@@ -608,7 +609,7 @@
       "filename": "sun_wukong.yaml",
       "description": "Monkey King mastering magic and mischief",
       "emoji": "🐒",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "twain",
@@ -616,7 +617,7 @@
       "filename": "twain.yaml",
       "description": "American humorist and social critic with unmatched wit",
       "emoji": "⛵",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "ux_designer",
@@ -624,7 +625,7 @@
       "filename": "ux_designer.yaml",
       "description": "UX designer creating intuitive digital experiences",
       "emoji": "🎨",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "washington",
@@ -632,7 +633,7 @@
       "filename": "washington.yaml",
       "description": "First President and Father of His Country",
       "emoji": "🎩",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "whitman",
@@ -640,7 +641,7 @@
       "filename": "whitman.yaml",
       "description": "Revolutionary American poet celebrating democracy and self",
       "emoji": "🌿",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     },
     {
       "id": "wicked_witch",
@@ -648,7 +649,7 @@
       "filename": "wicked_witch.yaml",
       "description": "Powerful witch defending her domain in Oz",
       "emoji": "🧹",
-      "created_at": "2025-03-06T15:46:33Z"
+      "created_at": "2025-03-07T00:30:52Z"
     }
   ]
 }

@@ -6,3 +6,4 @@ system_message: str(required=True, min=1, max=1500) # System message, max 1500 c
 label_color: str(required=True, min=1, max=15) # Label color, max 15 chars
 text_color: str(required=True, min=1, max=15) # Text color, max 15 chars
 is_default: bool(required=True)
+author: str(required=False, min=1, max=40) # Author name, max 40 chars
