@@ -1,13 +1,65 @@
 {
   "storefrontSettings": {
-    "newItemsConfig": { "enabled": true, "maxItems": 10, "timeWindowDays": 30 },
-    "featuredItemsConfig": { "enabled": true, "maxItems": 5 },
+    "newItemsConfig": {
+      "enabled": true,
+      "maxItems": 5,
+      "timeWindowDays": 14
+    },
+    "featuredItemsConfig": {
+      "enabled": true,
+      "maxItems": 5
+    },
     "categories": [
-      { "name": "Featured", "description": "Handpicked items we recommend.", "tags": ["featured"] },
-      { "name": "New Arrivals", "description": "Latest products added to our store.", "tags": ["new"] },
-      { "name": "Electronics", "description": "Latest gadgets and electronic accessories.", "tags": ["electronics"] },
-      { "name": "Clothing", "description": "Fashionable apparel for men, women, and kids.", "tags": ["clothing"] },
-      { "name": "Books", "description": "A collection of books from various genres.", "tags": ["books"] }
+      {
+        "name": "Featured",
+        "description": "Handpicked agents recommended for all users",
+        "tags": ["featured"]
+      },
+      {
+        "name": "New Arrivals",
+        "description": "Recently added agents to explore",
+        "tags": ["new"]
+      },
+      {
+        "name": "Creative Minds",
+        "description": "Artists, writers, and creative thinkers",
+        "tags": ["creative", "artists", "writers", "musicians"]
+      },
+      {
+        "name": "Scientific Experts",
+        "description": "Scientists and researchers across disciplines",
+        "tags": ["scientists", "technical"]
+      },
+      {
+        "name": "Philosophical Thinkers",
+        "description": "Deep thinkers exploring life's big questions",
+        "tags": ["philosophers", "intellectuals"]
+      },
+      {
+        "name": "Historical Figures",
+        "description": "Notable people who shaped human history",
+        "tags": ["historical", "cultural"]
+      },
+      {
+        "name": "Fictional Characters",
+        "description": "Characters from literature, film, and mythology",
+        "tags": ["fictional", "mythological", "movie_characters"]
+      },
+      {
+        "name": "Professional Guides",
+        "description": "Career and specialized knowledge experts",
+        "tags": ["professional", "business", "technical", "educational"]
+      },
+      {
+        "name": "Sports & Athletics",
+        "description": "Sports personalities and athletic professionals",
+        "tags": ["sports"]
+      },
+      {
+        "name": "Spiritual & Mystical",
+        "description": "Spiritual teachers and mystical figures",
+        "tags": ["spiritual", "mythological"]
+      }
     ]
   }
 }

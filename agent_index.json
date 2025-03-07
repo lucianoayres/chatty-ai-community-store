@@ -224,6 +224,7 @@
       "emoji": "🧪",
       "created_at": "2025-03-07T16:03:30Z",
       "tags": [
+        "featured",
         "scientists",
         "intellectuals"
       ]
@@ -390,6 +391,7 @@
       "emoji": "🌌",
       "created_at": "2025-03-07T16:03:30Z",
       "tags": [
+        "featured",
         "scientists",
         "intellectuals"
       ]
@@ -535,6 +537,7 @@
       "emoji": "🎨",
       "created_at": "2025-03-07T16:03:30Z",
       "tags": [
+        "featured",
         "artists",
         "creative",
         "scientists",
@@ -690,6 +693,7 @@
       "emoji": "🦅",
       "created_at": "2025-03-07T16:03:30Z",
       "tags": [
+        "featured",
         "creative",
         "cultural",
         "historical",
@@ -937,6 +941,7 @@
       "emoji": "⛵",
       "created_at": "2025-03-07T16:03:30Z",
       "tags": [
+        "featured",
         "writers",
         "cultural",
         "intellectuals"

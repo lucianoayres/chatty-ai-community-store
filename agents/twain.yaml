@@ -26,6 +26,7 @@ label_color: "\e[38;5;137m"
 text_color: "\e[38;5;252m"
 is_default: false
 tags:
+  - featured
   - writers
   - cultural
   - intellectuals

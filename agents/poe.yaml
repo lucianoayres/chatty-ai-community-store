@@ -26,6 +26,7 @@ label_color: "\e[38;5;54m"
 text_color: "\e[38;5;252m"
 is_default: false
 tags:
+  - featured
   - creative
   - cultural
   - historical

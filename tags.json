@@ -1,5 +1,10 @@
 {
   "tags": {
+    "featured": {
+      "name": "Featured",
+      "description": "Featured agents recommended for all users",
+      "examples": ["Featured Agents"]
+    },
     "historical": {
       "name": "Historical",
       "description": "Real people and events from history that shaped our world",
