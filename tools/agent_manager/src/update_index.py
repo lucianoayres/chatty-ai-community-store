@@ -29,6 +29,16 @@ def update_index(json_schema_path: str, yaml_schema_path: str) -> None:
         try:
             new_index, added_count, updated_count = generator.generate_index(
                 valid_data, valid_files)
+
+            # Add author field for entries where it exists in YAML
+            for i, (data, filename) in enumerate(zip(valid_data, valid_files)):
+                if 'author' in data and data['author']:
+                    # Find the corresponding entry in the index
+                    for entry in new_index['files']:
+                        if entry['filename'] == filename:
+                            entry['author'] = data['author']
+                            break
+
         except ValueError as e:
             print(f"Error generating index: {e}", file=sys.stderr)
             sys.exit(1)
