@@ -1,64 +1,76 @@
 {
   "storefrontSettings": {
-    "newItemsConfig": {
-      "enabled": true,
-      "maxItems": 5,
-      "timeWindowDays": 14
-    },
-    "featuredItemsConfig": {
-      "enabled": true,
-      "maxItems": 5
-    },
     "categories": [
       {
         "name": "Featured",
         "description": "Handpicked agents recommended for all users",
-        "tags": ["featured"]
+        "tags": ["featured"],
+        "enabled": true,
+        "maxItems": 5
       },
       {
         "name": "New Arrivals",
         "description": "Recently added agents to explore",
-        "tags": ["new"]
+        "tags": ["new"],
+        "enabled": true,
+        "maxItems": 5,
+        "timeWindowDays": 14
       },
       {
         "name": "Creative Minds",
         "description": "Artists, writers, and creative thinkers",
-        "tags": ["creative", "artists", "writers", "musicians"]
+        "tags": ["creative", "artists", "writers", "musicians"],
+        "enabled": true,
+        "maxItems": 8
       },
       {
         "name": "Scientific Experts",
         "description": "Scientists and researchers across disciplines",
-        "tags": ["scientists", "technical"]
+        "tags": ["scientists", "technical"],
+        "enabled": true,
+        "maxItems": 6
       },
       {
         "name": "Philosophical Thinkers",
         "description": "Deep thinkers exploring life's big questions",
-        "tags": ["philosophers", "intellectuals"]
+        "tags": ["philosophers", "intellectuals"],
+        "enabled": true,
+        "maxItems": 6
       },
       {
         "name": "Historical Figures",
         "description": "Notable people who shaped human history",
-        "tags": ["historical", "cultural"]
+        "tags": ["historical", "cultural"],
+        "enabled": true,
+        "maxItems": 8
       },
       {
         "name": "Fictional Characters",
         "description": "Characters from literature, film, and mythology",
-        "tags": ["fictional", "mythological", "movie_characters"]
+        "tags": ["fictional", "mythological", "movie_characters"],
+        "enabled": true,
+        "maxItems": 8
       },
       {
         "name": "Professional Guides",
         "description": "Career and specialized knowledge experts",
-        "tags": ["professional", "business", "technical", "educational"]
+        "tags": ["professional", "business", "technical", "educational"],
+        "enabled": true,
+        "maxItems": 8
       },
       {
         "name": "Sports & Athletics",
         "description": "Sports personalities and athletic professionals",
-        "tags": ["sports"]
+        "tags": ["sports"],
+        "enabled": true,
+        "maxItems": 5
       },
       {
         "name": "Spiritual & Mystical",
         "description": "Spiritual teachers and mystical figures",
-        "tags": ["spiritual", "mythological"]
+        "tags": ["spiritual", "mythological"],
+        "enabled": true,
+        "maxItems": 5
       }
     ]
   }
