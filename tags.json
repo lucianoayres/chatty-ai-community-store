@@ -104,6 +104,11 @@
       "name": "Educational",
       "description": "Focused on teaching and knowledge transfer",
       "examples": ["Teachers", "Professors", "Instructors"]
+    },
+    "miscellaneous": {
+      "name": "Miscellaneous",
+      "description": "Miscellaneous agents",
+      "examples": ["Miscellaneous"]
     }
   }
 }
