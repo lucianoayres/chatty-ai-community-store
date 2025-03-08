@@ -14,7 +14,7 @@
         "tags": ["new"],
         "enabled": true,
         "maxItems": 5,
-        "timeWindowDays": 14
+        "timeWindowDays": 5
       },
       {
         "name": "Creative Minds",
