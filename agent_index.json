@@ -8,10 +8,8 @@
       "filename": "amaterasu.yaml",
       "description": "Japanese sun goddess illuminating heaven and earth",
       "emoji": "🌅",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "spiritual"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["spiritual"]
     },
     {
       "id": "anubis",
@@ -19,10 +17,8 @@
       "filename": "anubis.yaml",
       "description": "Egyptian god guiding souls to judgment",
       "emoji": "🐺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological"
-      ],
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological"],
       "author": "Luciano Ayres"
     },
     {
@@ -31,12 +27,8 @@
       "filename": "armstrong.yaml",
       "description": "Jazz pioneer and beloved cultural ambassador",
       "emoji": "🎺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "musicians",
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["musicians", "artists", "creative"]
     },
     {
       "id": "athena",
@@ -44,10 +36,8 @@
       "filename": "athena.yaml",
       "description": "Goddess of wisdom and strategic warfare",
       "emoji": "🦉",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological"]
     },
     {
       "id": "barrymore",
@@ -55,12 +45,8 @@
       "filename": "barrymore.yaml",
       "description": "The Great Profile of America's theatrical dynasty",
       "emoji": "🎬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative", "cultural"]
     },
     {
       "id": "beauvoir",
@@ -68,11 +54,8 @@
       "filename": "beauvoir.yaml",
       "description": "Feminist philosopher analyzing gender and freedom",
       "emoji": "📚",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals"]
     },
     {
       "id": "bernhardt",
@@ -80,11 +63,8 @@
       "filename": "bernhardt.yaml",
       "description": "Legendary French actress and theatrical innovator",
       "emoji": "🎭",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "big_bad_wolf",
@@ -92,11 +72,8 @@
       "filename": "big_bad_wolf.yaml",
       "description": "Cunning forest dweller and master of deception",
       "emoji": "🐺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "billy_the_kid",
@@ -104,10 +81,8 @@
       "filename": "billy_the_kid.yaml",
       "description": "Old West figure offering frontier era insights",
       "emoji": "🤠",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["cultural"]
     },
     {
       "id": "blackbeard",
@@ -115,10 +90,8 @@
       "filename": "blackbeard.yaml",
       "description": "Colonial era maritime figure with historical insights",
       "emoji": "⚓",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["cultural"]
     },
     {
       "id": "bonnie_parker",
@@ -126,10 +99,8 @@
       "filename": "bonnie_parker.yaml",
       "description": "Depression era figure analyzing 1930s society",
       "emoji": "📰",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["cultural"]
     },
     {
       "id": "brando",
@@ -137,11 +108,8 @@
       "filename": "brando.yaml",
       "description": "Revolutionary method actor who transformed cinema",
       "emoji": "🎭",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "camus",
@@ -149,12 +117,8 @@
       "filename": "camus.yaml",
       "description": "Absurdist philosopher celebrating human dignity",
       "emoji": "🚬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals",
-        "writers"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals", "writers"]
     },
     {
       "id": "capone",
@@ -162,10 +126,8 @@
       "filename": "capone.yaml",
       "description": "Prohibition era figure offering historical insights",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["cultural"]
     },
     {
       "id": "captain_nemo",
@@ -173,11 +135,8 @@
       "filename": "captain_nemo.yaml",
       "description": "Mysterious submarine captain and scientific genius",
       "emoji": "🌊",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "chaplin",
@@ -185,12 +144,8 @@
       "filename": "chaplin.yaml",
       "description": "Silent film genius and revolutionary filmmaker",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "creative",
-        "artists",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["creative", "artists", "cultural"]
     },
     {
       "id": "chomsky",
@@ -198,11 +153,8 @@
       "filename": "chomsky.yaml",
       "description": "Revolutionary linguist and political critic",
       "emoji": "🧠",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "writers",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["writers", "intellectuals"]
     },
     {
       "id": "cinderella",
@@ -210,11 +162,8 @@
       "filename": "cinderella.yaml",
       "description": "Kind-hearted maiden whose grace transformed her life",
       "emoji": "👠",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "curie",
@@ -222,12 +171,8 @@
       "filename": "curie.yaml",
       "description": "Pioneering physicist and chemist, double Nobel laureate",
       "emoji": "🧪",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "featured",
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["featured", "scientists", "intellectuals"]
     },
     {
       "id": "darwin",
@@ -235,11 +180,8 @@
       "filename": "darwin.yaml",
       "description": "Revolutionary naturalist who developed the theory of evolution",
       "emoji": "🔬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "intellectuals"]
     },
     {
       "id": "data_scientist",
@@ -247,10 +189,8 @@
       "filename": "data_scientist.yaml",
       "description": "Data scientist specializing in machine learning and analytics",
       "emoji": "📊",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "technical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["technical"]
     },
     {
       "id": "davis",
@@ -258,11 +198,8 @@
       "filename": "davis.yaml",
       "description": "Legendary actress known for intensity and craft",
       "emoji": "🎬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "devops_engineer",
@@ -270,10 +207,8 @@
       "filename": "devops_engineer.yaml",
       "description": "DevOps specialist focused on automation and reliability",
       "emoji": "🔄",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "technical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["technical"]
     },
     {
       "id": "dickinson",
@@ -281,11 +216,8 @@
       "filename": "dickinson.yaml",
       "description": "Reclusive poet exploring nature, death, and immortality",
       "emoji": "🌸",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "writers",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["writers", "creative"]
     },
     {
       "id": "don_corleone",
@@ -293,11 +225,8 @@
       "filename": "don_corleone.yaml",
       "description": "Wise patriarch discussing family and honor",
       "emoji": "🌹",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "evil_queen",
@@ -305,11 +234,8 @@
       "filename": "evil_queen.yaml",
       "description": "Powerful queen exploring beauty and authority",
       "emoji": "👑",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "foucault",
@@ -317,11 +243,8 @@
       "filename": "foucault.yaml",
       "description": "Post-structuralist analyzing power and knowledge",
       "emoji": "🔍",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals"]
     },
     {
       "id": "frida",
@@ -329,11 +252,8 @@
       "filename": "frida.yaml",
       "description": "Revolutionary Mexican artist known for powerful self-expression",
       "emoji": "🎨",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "gandhi",
@@ -341,11 +261,8 @@
       "filename": "gandhi.yaml",
       "description": "Visionary leader who championed nonviolent resistance",
       "emoji": "🙏",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "garbo",
@@ -353,11 +270,8 @@
       "filename": "garbo.yaml",
       "description": "Enigmatic star of Hollywood's Golden Age",
       "emoji": "🎬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "cultural"]
     },
     {
       "id": "george_carlin",
@@ -365,11 +279,8 @@
       "filename": "george_carlin.yaml",
       "description": "Counter-cultural comedian questioning everything",
       "emoji": "🎤",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "creative"]
     },
     {
       "id": "groucho_marx",
@@ -377,11 +288,8 @@
       "filename": "groucho_marx.yaml",
       "description": "Quick-witted master of comedic wordplay",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "creative",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["creative", "cultural"]
     },
     {
       "id": "hawking",
@@ -389,12 +297,8 @@
       "filename": "hawking.yaml",
       "description": "Brilliant cosmologist who explored universe's mysteries",
       "emoji": "🌌",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "featured",
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["featured", "scientists", "intellectuals"]
     },
     {
       "id": "heisenberg",
@@ -402,11 +306,8 @@
       "filename": "heisenberg.yaml",
       "description": "Quantum pioneer who formulated the uncertainty principle",
       "emoji": "⚡",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "intellectuals"]
     },
     {
       "id": "hepburn",
@@ -414,11 +315,8 @@
       "filename": "hepburn.yaml",
       "description": "Legendary actress known for independence and wit",
       "emoji": "🎭",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "cultural"]
     },
     {
       "id": "holiday",
@@ -426,11 +324,8 @@
       "filename": "holiday.yaml",
       "description": "Lady Day, who revolutionized jazz vocals",
       "emoji": "🎤",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "isis",
@@ -438,11 +333,8 @@
       "filename": "isis.yaml",
       "description": "Egyptian goddess of magic and motherhood",
       "emoji": "👑",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological", "cultural"]
     },
     {
       "id": "jack_the_ripper",
@@ -450,11 +342,8 @@
       "filename": "jack_the_ripper.yaml",
       "description": "Victorian era figure analyzing 1880s London society",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "jackie_robinson",
@@ -462,12 +351,8 @@
       "filename": "jackie_robinson.yaml",
       "description": "Baseball pioneer who broke the color barrier",
       "emoji": "⚾",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural",
-        "sports"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural", "sports"]
     },
     {
       "id": "jesse_owens",
@@ -475,11 +360,8 @@
       "filename": "jesse_owens.yaml",
       "description": "Olympic legend who challenged racial prejudice",
       "emoji": "🏃",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "sports"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "sports"]
     },
     {
       "id": "jesus",
@@ -487,11 +369,8 @@
       "filename": "jesus.yaml",
       "description": "Spiritual teacher who transformed human history",
       "emoji": "🙏",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "spiritual",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["spiritual", "cultural"]
     },
     {
       "id": "kali",
@@ -499,11 +378,8 @@
       "filename": "kali.yaml",
       "description": "Hindu goddess of time and transformation",
       "emoji": "🌙",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological", "cultural"]
     },
     {
       "id": "kant",
@@ -511,11 +387,8 @@
       "filename": "kant.yaml",
       "description": "Enlightenment philosopher who revolutionized human reason",
       "emoji": "📖",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals"]
     },
     {
       "id": "kennedy",
@@ -523,11 +396,8 @@
       "filename": "kennedy.yaml",
       "description": "35th President who inspired the New Frontier",
       "emoji": "🌟",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "leonardo",
@@ -535,15 +405,8 @@
       "filename": "leonardo.yaml",
       "description": "Renaissance polymath combining art, science, and innovation",
       "emoji": "🎨",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "featured",
-        "artists",
-        "creative",
-        "scientists",
-        "intellectuals",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["featured", "artists", "creative", "scientists", "intellectuals", "cultural"]
     },
     {
       "id": "lincoln",
@@ -551,11 +414,8 @@
       "filename": "lincoln.yaml",
       "description": "16th President who preserved the Union and ended slavery",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "lucille_ball",
@@ -563,11 +423,8 @@
       "filename": "lucille_ball.yaml",
       "description": "Television pioneer mastering comedy and business",
       "emoji": "📺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "mcclintock",
@@ -575,11 +432,8 @@
       "filename": "mcclintock.yaml",
       "description": "Pioneering geneticist who discovered jumping genes",
       "emoji": "🌽",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "intellectuals"]
     },
     {
       "id": "merlin",
@@ -587,11 +441,8 @@
       "filename": "merlin.yaml",
       "description": "Legendary wizard who lives backwards through time",
       "emoji": "🧙",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological", "cultural"]
     },
     {
       "id": "mozart",
@@ -599,14 +450,8 @@
       "filename": "mozart.yaml",
       "description": "Musical genius who defined the Classical era",
       "emoji": "🎹",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "musicians",
-        "creative",
-        "cultural",
-        "historical",
-        "artists"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["musicians", "creative", "cultural", "historical", "artists"]
     },
     {
       "id": "muhammad_ali",
@@ -614,12 +459,8 @@
       "filename": "muhammad_ali.yaml",
       "description": "The Greatest - legendary boxer and social activist",
       "emoji": "🥊",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "sports",
-        "cultural",
-        "historical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["sports", "cultural", "historical"]
     },
     {
       "id": "nietzsche",
@@ -627,13 +468,8 @@
       "filename": "nietzsche.yaml",
       "description": "Revolutionary philosopher revaluating all values",
       "emoji": "⚡",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals",
-        "creative",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals", "creative", "cultural"]
     },
     {
       "id": "odin",
@@ -641,11 +477,8 @@
       "filename": "odin.yaml",
       "description": "Allfather of Norse gods seeking eternal wisdom",
       "emoji": "🔮",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["mythological", "cultural"]
     },
     {
       "id": "olivier",
@@ -653,12 +486,8 @@
       "filename": "olivier.yaml",
       "description": "Greatest classical actor of the 20th century",
       "emoji": "🎪",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative", "cultural"]
     },
     {
       "id": "pauling",
@@ -666,11 +495,8 @@
       "filename": "pauling.yaml",
       "description": "Revolutionary chemist and peace activist, double Nobel laureate",
       "emoji": "🧬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "intellectuals"]
     },
     {
       "id": "pele",
@@ -678,12 +504,8 @@
       "filename": "pele.yaml",
       "description": "The King of Football - global sport ambassador",
       "emoji": "⚽",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "sports",
-        "cultural",
-        "historical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["sports", "cultural", "historical"]
     },
     {
       "id": "poe",
@@ -691,15 +513,8 @@
       "filename": "poe.yaml",
       "description": "Master of gothic horror and psychological tales",
       "emoji": "🦅",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "featured",
-        "creative",
-        "cultural",
-        "historical",
-        "writers",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["featured", "creative", "cultural", "historical", "writers", "intellectuals"]
     },
     {
       "id": "presley",
@@ -707,13 +522,8 @@
       "filename": "presley.yaml",
       "description": "The King of Rock and Roll who changed popular music",
       "emoji": "👑",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "musicians",
-        "creative",
-        "cultural",
-        "historical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["musicians", "creative", "cultural", "historical"]
     },
     {
       "id": "product_manager",
@@ -721,10 +531,8 @@
       "filename": "product_manager.yaml",
       "description": "Product manager bridging user needs and technology",
       "emoji": "📱",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "professional"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["professional"]
     },
     {
       "id": "rapunzel",
@@ -732,11 +540,8 @@
       "filename": "rapunzel.yaml",
       "description": "Creative spirit who found freedom through courage",
       "emoji": "🏰",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "red_riding_hood",
@@ -744,11 +549,8 @@
       "filename": "red_riding_hood.yaml",
       "description": "Forest traveler who learned wisdom from danger",
       "emoji": "🧺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "richard_pryor",
@@ -756,11 +558,8 @@
       "filename": "richard_pryor.yaml",
       "description": "Revolutionary comedian speaking raw truth",
       "emoji": "🎭",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "artists",
-        "creative"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["artists", "creative"]
     },
     {
       "id": "rick_blaine",
@@ -768,11 +567,8 @@
       "filename": "rick_blaine.yaml",
       "description": "Cynical expatriate with a noble heart from Casablanca",
       "emoji": "🎲",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "ripley",
@@ -780,12 +576,8 @@
       "filename": "ripley.yaml",
       "description": "Resourceful survivor and space warrant officer",
       "emoji": "🚀",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural",
-        "movie_characters"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural", "movie_characters"]
     },
     {
       "id": "roosevelt",
@@ -793,11 +585,8 @@
       "filename": "roosevelt.yaml",
       "description": "32nd President who led through Depression and WWII",
       "emoji": "🦅",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "rosalind_franklin",
@@ -805,11 +594,8 @@
       "filename": "rosalind_franklin.yaml",
       "description": "Pioneering crystallographer who revealed DNA's structure",
       "emoji": "🧬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "intellectuals"]
     },
     {
       "id": "rumpelstiltskin",
@@ -817,11 +603,8 @@
       "filename": "rumpelstiltskin.yaml",
       "description": "Magical dealmaker who spins straw into gold",
       "emoji": "🎭",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "sagan",
@@ -829,13 +612,8 @@
       "filename": "sagan.yaml",
       "description": "Beloved astronomer who shared cosmos's wonders",
       "emoji": "🌠",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "scientists",
-        "creative",
-        "cultural",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["scientists", "creative", "cultural", "intellectuals"]
     },
     {
       "id": "said",
@@ -843,11 +621,8 @@
       "filename": "said.yaml",
       "description": "Post-colonial theorist analyzing cultural power",
       "emoji": "📖",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "intellectuals",
-        "writers"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["intellectuals", "writers"]
     },
     {
       "id": "sartre",
@@ -855,12 +630,8 @@
       "filename": "sartre.yaml",
       "description": "Existentialist philosopher exploring human freedom",
       "emoji": "🚬",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals",
-        "writers"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals", "writers"]
     },
     {
       "id": "sea_witch",
@@ -868,11 +639,8 @@
       "filename": "sea_witch.yaml",
       "description": "Ocean sorceress specializing in magical contracts",
       "emoji": "🐙",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "security_expert",
@@ -880,10 +648,8 @@
       "filename": "security_expert.yaml",
       "description": "Cybersecurity expert specializing in system protection",
       "emoji": "🔒",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "technical"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["technical"]
     },
     {
       "id": "snow_white",
@@ -891,11 +657,8 @@
       "filename": "snow_white.yaml",
       "description": "Pure-hearted princess who leads through kindness",
       "emoji": "🍎",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["fictional", "cultural"]
     },
     {
       "id": "socrates",
@@ -903,12 +666,8 @@
       "filename": "socrates.yaml",
       "description": "Ancient Greek philosopher who uses questioning to uncover truth",
       "emoji": "🏺",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "philosophers",
-        "intellectuals",
-        "cultural"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["philosophers", "intellectuals", "cultural"]
     },
     {
       "id": "software_architect",
@@ -916,10 +675,8 @@
       "filename": "software_architect.yaml",
       "description": "Experienced architect specializing in scalable system design",
       "emoji": "🌐",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "professional"
-      ]
+      "created_at": "2025-03-01T16:03:30Z",
+      "tags": ["professional"]
     },
     {
       "id": "sun_wukong",
@@ -927,11 +684,8 @@
       "filename": "sun_wukong.yaml",
       "description": "Monkey King mastering magic and mischief",
       "emoji": "🐒",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "mythological",
-        "cultural"
-      ]
+      "created_at": "2025-03-02T16:03:30Z",
+      "tags": ["mythological", "cultural"]
     },
     {
       "id": "twain",
@@ -939,13 +693,8 @@
       "filename": "twain.yaml",
       "description": "American humorist and social critic with unmatched wit",
       "emoji": "⛵",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "featured",
-        "writers",
-        "cultural",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-03T16:03:30Z",
+      "tags": ["featured", "writers", "cultural", "intellectuals"]
     },
     {
       "id": "ux_designer",
@@ -953,10 +702,8 @@
       "filename": "ux_designer.yaml",
       "description": "UX designer creating intuitive digital experiences",
       "emoji": "🎨",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "professional"
-      ]
+      "created_at": "2025-03-04T16:03:30Z",
+      "tags": ["professional"]
     },
     {
       "id": "washington",
@@ -964,11 +711,8 @@
       "filename": "washington.yaml",
       "description": "First President and Father of His Country",
       "emoji": "🎩",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "historical",
-        "cultural"
-      ]
+      "created_at": "2025-03-05T16:03:30Z",
+      "tags": ["historical", "cultural"]
     },
     {
       "id": "whitman",
@@ -976,12 +720,8 @@
       "filename": "whitman.yaml",
       "description": "Revolutionary American poet celebrating democracy and self",
       "emoji": "🌿",
-      "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "writers",
-        "cultural",
-        "intellectuals"
-      ]
+      "created_at": "2025-03-06T16:03:30Z",
+      "tags": ["writers", "cultural", "intellectuals"]
     },
     {
       "id": "wicked_witch",
@@ -990,10 +730,7 @@
       "description": "Powerful witch defending her domain in Oz",
       "emoji": "🧹",
       "created_at": "2025-03-07T16:03:30Z",
-      "tags": [
-        "fictional",
-        "cultural"
-      ]
+      "tags": ["fictional", "cultural"]
     }
   ]
 }
