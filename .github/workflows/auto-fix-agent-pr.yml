@@ -1,4 +1,4 @@
-name: Auto-Create Fix PR for Invalid Agent Files
+name: Auto-Recovery for Quarantined Agent Files
 
 on:
   workflow_run:
@@ -14,11 +14,49 @@ permissions:
   issues: write
 
 jobs:
-  create-fix-pr:
-    name: Create PR with Agent File Fixes
+  check-if-needed:
+    name: Check If Recovery Is Needed
     runs-on: ubuntu-latest
-    # Only run if the workflow failed (Update Agent Index) or completed successfully (Quarantine)
-    if: ${{ github.event.workflow_run.conclusion == 'failure' || (github.event.workflow_run.name == 'Quarantine Invalid Agent Files' && github.event.workflow_run.conclusion == 'success') }}
+    # Only run if:
+    # 1. Update Agent Index failed (likely validation issue), OR
+    # 2. Quarantine Invalid Agent Files succeeded (files were actually quarantined)
+    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.name == 'Update Agent Index' || (github.event.workflow_run.name == 'Quarantine Invalid Agent Files' && github.event.workflow_run.conclusion == 'success') }}
+
+    outputs:
+      continue: ${{ steps.check-artifacts.outputs.has_validation_artifacts }}
+
+    steps:
+      - name: Check for validation artifacts
+        id: check-artifacts
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // Get the artifacts from the triggering workflow
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id
+            });
+
+            // Find validation results artifact
+            const validationArtifact = artifacts.data.artifacts.find(
+              artifact => artifact.name === "validation-results"
+            );
+
+            if (!validationArtifact) {
+              console.log('No validation results artifact found - no fixes needed');
+              return core.setOutput('has_validation_artifacts', 'false');
+            }
+
+            console.log('Found validation artifacts - auto-fix may be needed');
+            return core.setOutput('has_validation_artifacts', 'true');
+
+  create-fix-pr:
+    name: Attempt Recovery and Create PR
+    runs-on: ubuntu-latest
+    needs: check-if-needed
+    if: ${{ needs.check-if-needed.outputs.continue == 'true' }}
 
     steps:
       - name: Checkout code
@@ -94,8 +132,12 @@ jobs:
 
           # Store validation errors if available
           ERROR_SUMMARY=""
-          if [ -f "error_summary.txt" ]; then
-            ERROR_SUMMARY=$(cat error_summary.txt)
+          if [ -f "artifacts/error_summary.txt" ]; then
+            ERROR_SUMMARY=$(cat artifacts/error_summary.txt)
+            echo "Found validation errors from workflow artifact:"
+            echo "$ERROR_SUMMARY"
+          elif [ -f "validation_logs/error_summary.txt" ]; then
+            ERROR_SUMMARY=$(cat validation_logs/error_summary.txt)
             echo "Found validation errors from workflow artifact:"
             echo "$ERROR_SUMMARY"
           else
@@ -127,6 +169,13 @@ jobs:
             fi
           else
             echo "No agents/invalid directory exists yet - skipping check for quarantined files"
+          fi
+
+          # Early exit if nothing to fix
+          if [ -z "$INVALID_FILES_FROM_ERRORS" ] && [ -z "$QUARANTINED_FILES" ]; then
+            echo "No invalid files or quarantined files found - nothing to fix"
+            echo "::error::No files to fix were found. Exiting workflow."
+            exit 1
           fi
 
           # Function to apply common fixes to YAML files
@@ -280,6 +329,8 @@ jobs:
             git push origin $BRANCH_NAME
           else
             echo "No files could be fixed automatically"
+            echo "::error::Found invalid files but could not fix them automatically. Manual intervention required."
+            exit 1
           fi
 
       - name: Create Pull Request

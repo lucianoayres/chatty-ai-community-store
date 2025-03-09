@@ -164,29 +164,28 @@ jobs:
           if [ ! -d "agents/invalid" ]; then
             echo "Creating agents/invalid directory for the first time"
             mkdir -p agents/invalid
-            # Add a README to explain the purpose of this directory
-            cat > agents/invalid/README.md << 'EOL'
-            # Invalid Agent Files
-
-            This directory contains agent files that failed validation but were preserved for reference.
-
-            ## Why Files are Here
-
-            Files in this directory were automatically moved here by the quarantine workflow when they:
-            1. Failed validation checks
-            2. Were pushed directly to the main branch
             
-            ## How to Fix
-
-            1. Review the validation errors (available in the associated GitHub issue)
-            2. Make the necessary corrections
-            3. Create a PR with the fixed file in the main `agents/` directory
-
-            ## Naming Convention
-
-            Files here follow the pattern: `original_filename_TIMESTAMP.yaml`
-            The timestamp helps avoid name collisions if the same file is quarantined multiple times.
-            EOL
+            # Create a simple README without heredoc to avoid syntax issues
+            echo "# Invalid Agent Files" > agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "This directory contains agent files that failed validation but were preserved for reference." >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "## Why Files are Here" >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "Files in this directory were automatically moved here by the quarantine workflow when they:" >> agents/invalid/README.md
+            echo "1. Failed validation checks" >> agents/invalid/README.md
+            echo "2. Were pushed directly to the main branch" >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "## How to Fix" >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "1. Review the validation errors (available in the associated GitHub issue)" >> agents/invalid/README.md
+            echo "2. Make the necessary corrections" >> agents/invalid/README.md
+            echo "3. Create a PR with the fixed file in the main \`agents/\` directory" >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "## Naming Convention" >> agents/invalid/README.md
+            echo "" >> agents/invalid/README.md
+            echo "Files here follow the pattern: \`original_filename_TIMESTAMP.yaml\`" >> agents/invalid/README.md
+            echo "The timestamp helps avoid name collisions if the same file is quarantined multiple times." >> agents/invalid/README.md
           else
             echo "agents/invalid directory already exists"
           fi
