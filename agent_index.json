@@ -1,18 +1,7 @@
 {
   "version": "1.0",
-  "total_agents": 82,
+  "total_agents": 81,
   "files": [
-    {
-      "id": "abcd",
-      "name": "ABCTEST",
-      "filename": "abcd.yaml",
-      "description": "Japanese sun goddess illuminating heaven and earth",
-      "emoji": "🌅",
-      "created_at": "2025-03-09T22:39:20Z",
-      "tags": [
-        "spiritual"
-      ]
-    },
     {
       "id": "amaterasu",
       "name": "Amaterasu",
