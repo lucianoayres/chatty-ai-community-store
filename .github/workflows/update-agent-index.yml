@@ -61,16 +61,22 @@ jobs:
           for file in $CHANGED_FILES; do
             echo "Validating $file..."
             
-            # Run the validator with verbose flag but redirect output to log file only
-            # to avoid cluttering the GitHub Actions UI
-            python tools/agent_manager/src/validator.py \
+            # Run the validator with verbose flag and capture output instead of just redirecting
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
               --verbose \
-              2>&1 >> $VALIDATION_LOG
+              2>&1)
             
             VALIDATION_EXIT_CODE=$?
+            
+            # Save full output to log file
+            echo "Validating $file..." >> $VALIDATION_LOG
+            echo "-----------------------------------------" >> $VALIDATION_LOG
+            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
+            echo "-----------------------------------------" >> $VALIDATION_LOG
+            echo "" >> $VALIDATION_LOG
             
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
@@ -79,38 +85,57 @@ jobs:
               # Add error details to summary for easy reference
               echo "❌ File: $file" | tee -a $ERROR_SUMMARY
               
-              # Extract error details from the log
-              ERROR_DETAILS=$(grep -A 10 "Validation Errors:" $VALIDATION_LOG | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | tail -10 | sed 's/^/  /')
+              # Extract error details for display
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -A 10 "Validation Errors:" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -5 | sed 's/^/  /')
               
               if [ -n "$ERROR_DETAILS" ]; then
-                echo "  Error details:" | tee -a $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY
+                # Print the essential error details to the console AND log them
+                echo ""
+                echo "  Validation errors:"
+                echo "$ERROR_DETAILS"
+                echo ""
+                
+                # Add to summary
+                echo "  Error details:" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" >> $ERROR_SUMMARY
               else
-                # If we couldn't find structured error details, show the last few lines of output
-                echo "  Error details:" | tee -a $ERROR_SUMMARY
-                tail -5 $VALIDATION_LOG | sed 's/^/  /' | tee -a $ERROR_SUMMARY
+                # If we couldn't find error details in the structured output, take the last few lines
+                # This can happen with syntax errors or other unexpected issues
+                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5 | sed 's/^/  /')
+                
+                echo ""
+                echo "  Validation errors:"
+                echo "$ERROR_DETAILS"
+                echo ""
+                
+                # Add to summary
+                echo "  Error details:" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" >> $ERROR_SUMMARY
               fi
               
-              echo "" | tee -a $ERROR_SUMMARY
+              echo "" >> $ERROR_SUMMARY
               
               # Add error annotation for GitHub Actions UI with more detail
-              echo "::error file=$file::Validation failed: $(echo "$ERROR_DETAILS" | head -n 1 | sed 's/^ *//')"
+              FIRST_ERROR=$(echo "$ERROR_DETAILS" | head -n 1 | sed 's/^ *//')
+              echo "::error file=$file::Validation failed: $FIRST_ERROR"
             else
               echo "✅ File passed validation: $file"
             fi
-            
-            echo "-----------------------------------------" >> $VALIDATION_LOG
-            echo "" >> $VALIDATION_LOG
           done
 
           # Determine overall result
           if [ $FAIL_COUNT -gt 0 ]; then
             # Print error summary to make it clearly visible in workflow logs
+            echo ""
             echo "============================================="
             echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues"
             echo "============================================="
             echo ""
+            # Display the error summary in the console
             cat $ERROR_SUMMARY
+            
+            # Create GitHub annotations for key errors
+            echo "::error::Validation failed with $FAIL_COUNT error(s). See details above."
             
             # Save the outputs but don't print the full log in the console
             echo "validation_passed=false" >> $GITHUB_OUTPUT

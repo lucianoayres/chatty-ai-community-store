@@ -205,7 +205,7 @@ def main():
                     errors.append(f"Error reading log: {str(e)}")
 
                 # If no errors found in log, do additional checks
-                if not errors and (args.verbose or True):
+                if not errors:
                     try:
                         with open(args.file, 'r') as f:
                             file_data = yaml.safe_load(f)
@@ -234,10 +234,16 @@ def main():
                                                     if t not in validator.tag_manager.get_valid_tags()]
                                     errors.append(
                                         f"Invalid tags: {', '.join(invalid_tags)}")
+                            else:
+                                # Tags are required by the schema
+                                errors.append("Missing required field: tags")
+                    except yaml.YAMLError as e:
+                        # Special handling for YAML syntax errors which are common
+                        errors.append(f"YAML syntax error: {str(e)}")
                     except Exception as e:
                         errors.append(f"Error analyzing file: {str(e)}")
 
-                # Print all unique errors found
+                # Print all unique errors found with clear markers for parsing
                 if errors:
                     print("\nValidation Errors:")
                     for error in errors:
