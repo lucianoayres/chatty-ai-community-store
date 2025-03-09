@@ -52,17 +52,17 @@ jobs:
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "Validating $file..."
             
-            # Run validation and capture output
-            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+            # Run validation directly and show output in real-time
+            python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose
             
             # Capture exit code
             EXIT_CODE=$?
             
-            # Print validation output
-            echo "$VALIDATION_OUTPUT"
-            
             if [ $EXIT_CODE -ne 0 ]; then
               ERROR_FOUND=1
+              
+              # Run again to capture output for processing
+              VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
               
               # Parse and format detailed error information
               echo "::group::Detailed Validation Errors for $file"
@@ -194,16 +194,16 @@ jobs:
         run: |
           echo "Validating all agent YAML files..."
 
-          # Run validation and capture output
-          VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+          # Run validation directly to show output in real-time
+          python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose
 
           # Capture exit code
           EXIT_CODE=$?
 
-          # Print validation output
-          echo "$VALIDATION_OUTPUT"
-
           if [ $EXIT_CODE -ne 0 ]; then
+            # Run again to capture output for processing
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+            
             # Parse and categorize errors for better display
             echo "## ❌ Validation failed for one or more files" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
