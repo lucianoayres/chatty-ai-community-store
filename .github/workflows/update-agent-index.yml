@@ -11,6 +11,8 @@ jobs:
   update-index:
     name: Update Agent Index
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,6 +30,7 @@ jobs:
 
       - name: Validate changed agent files
         id: validation
+        continue-on-error: false
         run: |
           echo "::group::Validating changed agent files"
           # Get list of changed files
@@ -48,28 +51,26 @@ jobs:
           mkdir -p validation_logs
           VALIDATION_LOG="validation_logs/validation_results.txt"
           ERROR_SUMMARY="validation_logs/error_summary.txt"
-          echo "Validation results:" | tee -a $VALIDATION_LOG
-          echo "====================" | tee -a $VALIDATION_LOG
-          echo "" | tee -a $VALIDATION_LOG
+          echo "Validation results:" > $VALIDATION_LOG
+          echo "====================" >> $VALIDATION_LOG
+          echo "" >> $VALIDATION_LOG
 
           FAIL_COUNT=0
           echo "" > $ERROR_SUMMARY
 
           for file in $CHANGED_FILES; do
-            echo "Validating $file..." | tee -a $VALIDATION_LOG
+            echo "Validating $file..."
             
-            # Run the validator with verbose flag and tee both stdout and stderr directly to the log
-            # The -v flag ensures we see the command being run
-            set -v 
+            # Run the validator with verbose flag but redirect output to log file only
+            # to avoid cluttering the GitHub Actions UI
             python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
               --verbose \
-              2>&1 | tee -a $VALIDATION_LOG
+              2>&1 >> $VALIDATION_LOG
             
-            VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
-            set +v
+            VALIDATION_EXIT_CODE=$?
             
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
@@ -78,7 +79,7 @@ jobs:
               # Add error details to summary for easy reference
               echo "❌ File: $file" | tee -a $ERROR_SUMMARY
               
-              # Extract and format error messages - improved pattern matching for better output
+              # Extract error details from the log
               ERROR_DETAILS=$(grep -A 10 "Validation Errors:" $VALIDATION_LOG | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | tail -10 | sed 's/^/  /')
               
               if [ -n "$ERROR_DETAILS" ]; then
@@ -90,17 +91,16 @@ jobs:
                 tail -5 $VALIDATION_LOG | sed 's/^/  /' | tee -a $ERROR_SUMMARY
               fi
               
-              # Add separator for readability
               echo "" | tee -a $ERROR_SUMMARY
               
               # Add error annotation for GitHub Actions UI with more detail
-              echo "::error file=$file::Validation failed: See validation log for details"
+              echo "::error file=$file::Validation failed: $(echo "$ERROR_DETAILS" | head -n 1 | sed 's/^ *//')"
             else
-              echo "✅ File passed validation: $file" | tee -a $ERROR_SUMMARY
+              echo "✅ File passed validation: $file"
             fi
             
-            echo "-----------------------------------------" | tee -a $VALIDATION_LOG
-            echo "" | tee -a $VALIDATION_LOG
+            echo "-----------------------------------------" >> $VALIDATION_LOG
+            echo "" >> $VALIDATION_LOG
           done
 
           # Determine overall result
@@ -111,25 +111,21 @@ jobs:
             echo "============================================="
             echo ""
             cat $ERROR_SUMMARY
-            echo ""
-            echo "See validation logs for complete details"
             
-            # Print the entire log for debug purposes
-            echo "Full validation log:"
-            echo "============================================="
-            cat $VALIDATION_LOG
-            echo "============================================="
-            
+            # Save the outputs but don't print the full log in the console
             echo "validation_passed=false" >> $GITHUB_OUTPUT
             echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
             echo "error_summary<<EOF" >> $GITHUB_OUTPUT
             cat $ERROR_SUMMARY >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
             
+            echo ""
+            echo "Complete validation log saved as an artifact"
+            
             exit 1
           else
             echo "validation_passed=true" >> $GITHUB_OUTPUT
-            echo "✅ All agent files passed validation!" | tee -a $VALIDATION_LOG
+            echo "✅ All agent files passed validation!"
           fi
           echo "::endgroup::"
 
@@ -138,11 +134,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: validation-results
-          path: validation_logs/validation_results.txt
+          path: validation_logs/
 
       - name: Run manage_agents.sh script
         id: update-index
-        if: steps.validation.outputs.validation_passed == 'true'
+        if: steps.validation.outputs.validation_passed == 'true' && success()
         run: |
           echo "::group::Updating Agent Index"
           # Only run if validation passed
@@ -159,7 +155,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Commit updated index
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true'
+        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
         run: |
           # Configure git
           git config --local user.email "action@github.com"
@@ -173,7 +169,7 @@ jobs:
           git push
 
       - name: Find related PR
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true'
+        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
         id: find-pr
         uses: actions/github-script@v7
         with:
@@ -228,7 +224,7 @@ jobs:
             }
 
       - name: Comment on PR
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && steps.find-pr.outputs.pr_number != ''
+        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && steps.find-pr.outputs.pr_number != '' && success()
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -262,20 +258,18 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // Get both the detailed logs and the error summary
-            let validationLog = '';
+            // Get the error summary which is already concise
             let errorSummary = '';
 
             try {
-              validationLog = fs.readFileSync('validation_logs/validation_results.txt', 'utf8');
               errorSummary = '${{ steps.validation.outputs.error_summary }}';
               
-              // Truncate if too long for an issue
-              if (validationLog.length > 30000) {
-                validationLog = validationLog.substring(0, 30000) + '\n\n... (output truncated)';
+              // If errorSummary is empty or too short, read from the file
+              if (!errorSummary || errorSummary.length < 10) {
+                errorSummary = fs.readFileSync('validation_logs/error_summary.txt', 'utf8');
               }
             } catch (error) {
-              validationLog = 'Error reading validation log: ' + error.message;
+              errorSummary = 'Error reading validation summary: ' + error.message;
             }
 
             const issue = {
@@ -296,13 +290,10 @@ jobs:
               ${errorSummary}
               \`\`\`
               
-              ## Complete Validation Log
+              Please fix the validation issues and push again, or create a PR to resolve the issues.
               
-              \`\`\`
-              ${validationLog}
-              \`\`\`
-              
-              Please fix the validation issues and push again, or create a PR to resolve the issues.`
+              > **Note**: Full validation logs are available in the workflow run artifacts.
+              `
             };
 
             github.rest.issues.create(issue);

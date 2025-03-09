@@ -191,30 +191,29 @@ def main():
                 print(f"\n❌ VALIDATION FAILED: {args.file}")
                 print("==================================================")
 
-                # Always provide detailed error information
-                print("\nValidation Errors:")
-
-                # Check error log for this file
-                error_found = False
+                # Collect all errors for this file
+                errors = []
                 try:
                     with open(args.error_log, 'r') as error_log:
                         for line in error_log:
                             if args.file in line:
-                                print(f"  {line.strip()}")
-                                error_found = True
-                except:
-                    pass
+                                # Extract just the error message
+                                error_msg = line.split(':', 2)[-1].strip()
+                                if error_msg not in errors:  # Avoid duplicates
+                                    errors.append(error_msg)
+                except Exception as e:
+                    errors.append(f"Error reading log: {str(e)}")
 
-                # Additional checks in verbose mode
-                if args.verbose or not error_found:
-                    # Check for missing required fields
+                # If no errors found in log, do additional checks
+                if not errors and (args.verbose or True):
                     try:
                         with open(args.file, 'r') as f:
                             file_data = yaml.safe_load(f)
 
                         # Check basic structure
                         if not isinstance(file_data, dict):
-                            print("  Error: YAML file must contain a dictionary")
+                            errors.append(
+                                "YAML file must contain a dictionary")
                         else:
                             # Check required fields
                             required_fields = ['name', 'emoji', 'description', 'system_message',
@@ -222,20 +221,29 @@ def main():
                             missing_fields = [
                                 field for field in required_fields if field not in file_data]
                             if missing_fields:
-                                print(
-                                    f"  Error: Missing required fields: {', '.join(missing_fields)}")
+                                errors.append(
+                                    f"Missing required fields: {', '.join(missing_fields)}")
 
                             # Check tags if present
                             if 'tags' in file_data:
                                 if not isinstance(file_data['tags'], list):
-                                    print("  Error: 'tags' field must be a list")
+                                    errors.append(
+                                        "'tags' field must be a list")
                                 elif not validator.tag_manager.validate_tags(file_data['tags']):
                                     invalid_tags = [t for t in file_data['tags']
                                                     if t not in validator.tag_manager.get_valid_tags()]
-                                    print(
-                                        f"  Error: Invalid tags: {', '.join(invalid_tags)}")
+                                    errors.append(
+                                        f"Invalid tags: {', '.join(invalid_tags)}")
                     except Exception as e:
-                        print(f"  Error analyzing file: {str(e)}")
+                        errors.append(f"Error analyzing file: {str(e)}")
+
+                # Print all unique errors found
+                if errors:
+                    print("\nValidation Errors:")
+                    for error in errors:
+                        print(f"  Error: {error}")
+                else:
+                    print("  Error: Unknown validation failure")
 
                 print("\n==================================================")
                 sys.exit(1)
