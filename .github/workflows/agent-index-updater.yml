@@ -39,6 +39,11 @@ jobs:
           CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "agents/.*\.(yaml|yml)$" || echo "")
           echo "Changed YAML/YML files in agents directory:"
           echo "$CHANGED_FILES"
+
+          # Save the list of changed files for later use
+          echo "$CHANGED_FILES" > changed_files.txt
+
+          # Set outputs for use in later steps
           echo "changed_files<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -55,7 +60,7 @@ jobs:
         run: |
           echo "Updating agent index..."
           echo "Changed files:"
-          echo "${{ steps.changed-files.outputs.changed_files }}"
+          cat changed_files.txt
 
           # Make the script executable
           chmod +x tools/agent_manager/manage_agents.sh
@@ -123,9 +128,19 @@ jobs:
           if [ "${{ steps.update-index.outputs.index_updated }}" == "true" ]; then
             echo "✅ Agent index was updated successfully." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+            
             echo "The following files triggered this update:" >> $GITHUB_STEP_SUMMARY
             echo "```" >> $GITHUB_STEP_SUMMARY
-            echo "${{ steps.changed-files.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
+            
+            # Display the list of changed files directly
+            if [ -f "changed_files.txt" ]; then
+              cat changed_files.txt >> $GITHUB_STEP_SUMMARY
+            else
+              # Manually list the files from the PR
+              FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "agents/.*\.(yaml|yml)$" || echo "No YAML/YML files changed")
+              echo "$FILES" >> $GITHUB_STEP_SUMMARY
+            fi
+            
             echo "```" >> $GITHUB_STEP_SUMMARY
           else
             echo "ℹ️ No changes were needed to the agent index." >> $GITHUB_STEP_SUMMARY
