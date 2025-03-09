@@ -72,6 +72,7 @@ jobs:
           import sys
           import os
           import yaml
+          import yamale
           from validator import AgentValidator
 
           def validate_file(file_path, schema_path, tag_definitions_path):
@@ -84,49 +85,98 @@ jobs:
                   error_log_path="validation_logs/errors.log"
               )
               
-              # Validate file
-              data, is_valid = validator.validate_yaml(file_path)
-              
-              if is_valid:
-                  print(f"✅ {file_path} is valid")
-                  return True
-              else:
-                  print(f"\n❌ VALIDATION FAILED: {file_path}")
-                  print("==================================================")
+              # First try to load the YAML file
+              try:
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      file_content = f.read()
                   
-                  # Try to load the file to get more specific errors
                   try:
-                      with open(file_path, 'r') as f:
-                          file_content = f.read()
-                          
+                      data = yaml.safe_load(file_content)
+                      
+                      # Check if it's a dictionary
+                      if not isinstance(data, dict):
+                          print("Error: YAML file must contain a dictionary")
+                          return False
+                      
+                      # Load the schema directly
+                      schema = yamale.make_schema(schema_path)
+                      
+                      # Validate against schema
                       try:
-                          data = yaml.safe_load(file_content)
+                          yamale.validate(schema, [(data, file_path)])
+                          print(f"✅ Schema validation passed for {file_path}")
+                      except ValueError as e:
+                          print(f"Error: YAML schema validation error: {str(e)}")
                           
-                          # Check if it's a dictionary
-                          if not isinstance(data, dict):
-                              print("Error: YAML file must contain a dictionary")
+                          # Check for specific schema requirements
+                          with open(schema_path, 'r') as schema_file:
+                              schema_content = schema_file.read()
+                              print("\nSchema requirements:")
+                              for line in schema_content.split('\n'):
+                                  if 'required=True' in line and '#' in line:
+                                      field = line.split(':')[0].strip()
+                                      comment = line.split('#')[1].strip()
+                                      print(f"  - {field}: {comment}")
                           
-                          # Check required fields
+                          # Check for missing required fields
                           required_fields = ['name', 'emoji', 'description', 'system_message',
                                            'label_color', 'text_color', 'is_default', 'tags']
                           missing_fields = [field for field in required_fields if field not in data]
                           if missing_fields:
-                              print(f"Error: Missing required fields: {', '.join(missing_fields)}")
+                              print(f"\nError: Missing required fields: {', '.join(missing_fields)}")
+                          
+                          # Check field constraints
+                          if 'name' in data and isinstance(data['name'], str):
+                              if len(data['name']) > 40:
+                                  print(f"Error: 'name' field exceeds maximum length (40 chars): {len(data['name'])}")
+                          
+                          if 'description' in data and isinstance(data['description'], str):
+                              if len(data['description']) > 65:
+                                  print(f"Error: 'description' field exceeds maximum length (65 chars): {len(data['description'])}")
+                          
+                          if 'emoji' in data:
+                              if not isinstance(data['emoji'], str) or len(data['emoji']) != 1:
+                                  print("Error: 'emoji' field must be exactly one character")
+                          
+                          if 'system_message' in data and isinstance(data['system_message'], str):
+                              if len(data['system_message']) > 1500:
+                                  print(f"Error: 'system_message' field exceeds maximum length (1500 chars): {len(data['system_message'])}")
                           
                           # Check tags
                           if 'tags' in data:
                               if not isinstance(data['tags'], list):
                                   print("Error: 'tags' field must be a list")
+                              elif len(data['tags']) < 1:
+                                  print("Error: 'tags' field must have at least one tag")
                               elif not validator.tag_manager.validate_tags(data['tags']):
                                   invalid_tags = [t for t in data['tags'] 
                                                 if t not in validator.tag_manager.get_valid_tags()]
                                   print(f"Error: Invalid tags: {', '.join(invalid_tags)}")
-                      except yaml.YAMLError as e:
-                          print(f"Error: YAML parsing error: {str(e)}")
-                  except Exception as e:
-                      print(f"Error: Failed to analyze file: {str(e)}")
+                                  print(f"Valid tags are: {', '.join(validator.tag_manager.get_valid_tags())}")
+                          
+                          return False
+                      
+                      # If we got here, the file passed schema validation
+                      # Now check for any additional validation rules
+                      
+                      # Validate tags again to be sure
+                      if 'tags' in data:
+                          if not validator.tag_manager.validate_tags(data['tags']):
+                              invalid_tags = [t for t in data['tags'] 
+                                            if t not in validator.tag_manager.get_valid_tags()]
+                              print(f"Error: Invalid tags: {', '.join(invalid_tags)}")
+                              print(f"Valid tags are: {', '.join(validator.tag_manager.get_valid_tags())}")
+                              return False
+                      
+                      print(f"✅ {file_path} is valid")
+                      return True
+                      
+                  except yaml.YAMLError as e:
+                      print(f"Error: YAML parsing error: {str(e)}")
+                      return False
                   
-                  print("==================================================\n")
+              except Exception as e:
+                  print(f"Error: Failed to analyze file: {str(e)}")
                   return False
 
           def main():
