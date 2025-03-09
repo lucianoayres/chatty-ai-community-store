@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 from datetime import datetime, timezone
 import os
 import sys
+import argparse
 from yaml_writer import YAMLWriter
 from tag_manager import TagManager
 
@@ -46,19 +47,6 @@ class AgentValidator:
     def validate_yaml(self, filepath: str) -> Tuple[Dict, bool]:
         """Validate a single YAML file against schema."""
         try:
-            # First, check if the system_message uses literal block style in the original file
-            original_content = ""
-            with open(filepath, 'r', encoding='utf-8') as f:
-                original_content = f.read()
-
-            # Better detection of literal block style for system_message
-            uses_literal_style = False
-            import re
-            # Match system_message: | with possible whitespace
-            if re.search(r'system_message\s*:\s*\|', original_content):
-                uses_literal_style = True
-
-            # Load and validate the YAML content
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = yaml.safe_load(f)
 
@@ -88,12 +76,7 @@ class AgentValidator:
                             f"Suggested tags for {data['name']}: {', '.join(suggested_tags)}")
 
                 # Only write the file if validation was successful
-                # Pass the information about the original literal style
-                if 'system_message' in data:
-                    YAMLWriter.write_file(
-                        filepath, data, system_message_literal_style=uses_literal_style)
-                else:
-                    YAMLWriter.write_file(filepath, data)
+                YAMLWriter.write_file(filepath, data)
                 return data, True
 
             except ValueError as e:
@@ -136,3 +119,78 @@ class AgentValidator:
                 error_count += 1
 
         return valid_data, valid_files, error_count
+
+    def print_validation_error(self, filename: str, error: str, output_format: str = "plain") -> None:
+        """Print a validation error in the specified format."""
+        if output_format == "github-actions":
+            # GitHub Actions annotation format
+            file_only = os.path.basename(filename)
+            print(f"::error file={filename}::{error}")
+        else:
+            # Plain text format
+            print(f"Error in {filename}: {error}")
+
+
+def main():
+    """Command line interface for the validator."""
+    parser = argparse.ArgumentParser(
+        description='Validate agent YAML files against schema')
+    parser.add_argument('--yaml-schema', required=True,
+                        help='Path to YAML schema file')
+    parser.add_argument('--tag-definitions', required=False,
+                        help='Path to tag definitions JSON file')
+    parser.add_argument('--error-log', required=False,
+                        default='sync_errors.log', help='Path for error log file')
+    parser.add_argument('--file', help='Validate a single agent YAML file')
+    parser.add_argument(
+        '--directory', help='Validate all agent YAML files in a directory')
+    parser.add_argument('--output-format', choices=['plain', 'github-actions'], default='plain',
+                        help='Output format for validation results')
+
+    args = parser.parse_args()
+
+    if not args.file and not args.directory:
+        print("Error: You must specify either --file or --directory")
+        sys.exit(1)
+
+    try:
+        validator = AgentValidator(
+            args.yaml_schema,
+            tag_definitions_path=args.tag_definitions,
+            error_log_path=args.error_log
+        )
+
+        if args.file:
+            # Validate a single file
+            data, is_valid = validator.validate_yaml(args.file)
+
+            if is_valid:
+                print(f"✓ {args.file} is valid")
+                sys.exit(0)
+            else:
+                if args.output_format == "github-actions":
+                    print(f"::error file={args.file}::Validation failed")
+                else:
+                    print(f"✗ {args.file} failed validation")
+                sys.exit(1)
+
+        elif args.directory:
+            # Validate all files in a directory
+            valid_data, valid_files, error_count = validator.validate_directory(
+                args.directory)
+
+            print(
+                f"Validation complete: {len(valid_files)} valid files, {error_count} errors")
+
+            if error_count > 0:
+                sys.exit(1)
+            else:
+                sys.exit(0)
+
+    except Exception as e:
+        print(f"Error during validation: {str(e)}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

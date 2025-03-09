@@ -1,0 +1,222 @@
+name: Validate Agent PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "agents/**.yaml"
+
+jobs:
+  pre-check:
+    name: Basic YAML Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install basic dependencies
+        run: pip install pyyaml
+
+      - name: Basic YAML syntax check
+        id: syntax-check
+        run: |
+          echo "::group::YAML Syntax Validation"
+          FAILED_FILES=""
+
+          for file in $(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep "^agents/.*\.yaml$"); do
+            echo "Checking syntax for $file"
+            if ! python -c "import yaml; yaml.safe_load(open('$file'))"; then
+              FAILED_FILES="$FAILED_FILES\n- $file"
+              echo "::error file=$file::YAML syntax validation failed"
+            fi
+          done
+
+          if [ -n "$FAILED_FILES" ]; then
+            echo "::set-output name=failed_files::$FAILED_FILES"
+            echo "Syntax check failed for the following files:$FAILED_FILES"
+            exit 1
+          else
+            echo "All YAML files passed basic syntax check"
+          fi
+          echo "::endgroup::"
+    outputs:
+      failed_files: ${{ steps.syntax-check.outputs.failed_files }}
+
+  full-validation:
+    name: Full Agent Validation
+    needs: pre-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema yamale
+
+      - name: Run agent validator
+        id: validator
+        run: |
+          echo "::group::Full YAML Schema Validation"
+          mkdir -p validation_logs
+          VALIDATION_LOG="validation_logs/validation_results.txt"
+
+          # Set up environment for validator
+          export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
+
+          # Get the list of changed YAML files
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep "^agents/.*\.yaml$" || echo "")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No agent YAML files were changed in this PR."
+            exit 0
+          fi
+
+          # Validate each changed file
+          echo "Validating agent files:" | tee -a $VALIDATION_LOG
+          echo "$CHANGED_FILES" | tee -a $VALIDATION_LOG
+          echo "" | tee -a $VALIDATION_LOG
+
+          FAIL_COUNT=0
+
+          for file in $CHANGED_FILES; do
+            echo "Validating $file..." | tee -a $VALIDATION_LOG
+            
+            # Run the validator on the file
+            python tools/agent_manager/src/validator.py \
+              --yaml-schema schemas/agent.schema.yaml \
+              --file "$file" \
+              --tag-definitions tags.json \
+              --output-format github-actions \
+              2>&1 | tee -a $VALIDATION_LOG
+              
+            # Check if validation failed
+            if [ ${PIPESTATUS[0]} -ne 0 ]; then
+              FAIL_COUNT=$((FAIL_COUNT+1))
+              echo "::error file=$file::Validation failed. See logs for details."
+            fi
+            
+            echo "" | tee -a $VALIDATION_LOG
+          done
+
+          # Determine overall result
+          if [ $FAIL_COUNT -gt 0 ]; then
+            echo "::set-output name=validation_failed::true"
+            echo "::set-output name=fail_count::$FAIL_COUNT"
+            echo "::error::$FAIL_COUNT agent files failed validation."
+            exit 1
+          else
+            echo "::set-output name=validation_failed::false"
+            echo "All agent files passed validation! ✅"
+          fi
+          echo "::endgroup::"
+
+      - name: Upload validation results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: validation_logs/validation_results.txt
+
+      - name: Post validation results as comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+            const validationFailed = '${{ steps.validator.outputs.validation_failed }}' === 'true';
+            const failCount = '${{ steps.validator.outputs.fail_count }}';
+
+            let validationLog = '';
+            try {
+              validationLog = fs.readFileSync('validation_logs/validation_results.txt', 'utf8');
+              // Truncate if too long for a comment
+              if (validationLog.length > 50000) {
+                validationLog = validationLog.substring(0, 50000) + '\n\n... (output truncated)';
+              }
+            } catch (error) {
+              validationLog = 'Error reading validation log: ' + error.message;
+            }
+
+            let body = '## Agent Validation Results\n\n';
+
+            if (validationFailed) {
+              body += `❌ **Validation Failed**: ${failCount} file(s) did not pass validation.\n\n`;
+              body += 'Please fix the issues below before this PR can be reviewed:\n\n';
+            } else {
+              body += '✅ **All files passed validation!**\n\n';
+            }
+
+            body += '```\n' + validationLog + '\n```\n\n';
+
+            body += '### Next Steps\n\n';
+            if (validationFailed) {
+              body += '1. Fix the validation errors highlighted above\n';
+              body += '2. Push the changes to update this PR\n';
+              body += '3. The validation will automatically run again\n';
+            } else {
+              body += 'This PR is now ready for manual review.';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Add labels based on validation result
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const validationFailed = '${{ steps.validator.outputs.validation_failed }}' === 'true';
+
+            // Remove existing validation labels
+            const issue = { owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number };
+            const existingLabels = ['validation-passed', 'validation-failed', 'needs-review'];
+
+            for (const label of existingLabels) {
+              try {
+                await github.rest.issues.removeLabel({
+                  ...issue,
+                  name: label
+                });
+              } catch (error) {
+                // Label might not exist, which is fine
+                console.log(`Note: Could not remove label ${label}: ${error.message}`);
+              }
+            }
+
+            // Add appropriate labels
+            if (validationFailed) {
+              try {
+                await github.rest.issues.addLabels({
+                  ...issue,
+                  labels: ['validation-failed']
+                });
+              } catch (error) {
+                console.log(`Error adding validation-failed label: ${error.message}`);
+              }
+            } else {
+              // If validation passes, add both validation-passed and needs-review labels
+              try {
+                await github.rest.issues.addLabels({
+                  ...issue,
+                  labels: ['validation-passed', 'needs-review']
+                });
+              } catch (error) {
+                console.log(`Error adding labels: ${error.message}`);
+              }
+            }

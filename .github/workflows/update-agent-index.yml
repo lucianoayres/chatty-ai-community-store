@@ -1,0 +1,166 @@
+name: Update Agent Index
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "agents/**.yaml"
+
+jobs:
+  update-index:
+    name: Update Agent Index
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper comparison
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema yamale
+
+      - name: Run manage_agents.sh script
+        id: update-index
+        run: |
+          echo "::group::Updating Agent Index"
+          # Get list of changed files for tracking
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "^agents/.*\.yaml$" || echo "")
+          echo "Changed agent files:"
+          echo "$CHANGED_FILES"
+
+          # Run the manage_agents script
+          bash tools/agent_manager/manage_agents.sh
+
+          # Check if index file was modified
+          if git diff --name-only | grep -q "agent_index.json"; then
+            echo "::set-output name=index_updated::true"
+            echo "Agent index was updated!"
+          else
+            echo "::set-output name=index_updated::false"
+            echo "No changes to agent index."
+          fi
+          echo "::endgroup::"
+
+      - name: Commit updated index
+        if: steps.update-index.outputs.index_updated == 'true'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Add and commit the changes
+          git add agent_index.json
+          git commit -m "🤖 Auto-update agent index [skip ci]" -m "Triggered by commit ${GITHUB_SHA}"
+
+          # Push the changes
+          git push
+
+      - name: Find related PR
+        if: steps.update-index.outputs.index_updated == 'true'
+        id: find-pr
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // Find the most recent PR that was merged into this branch
+            const query = `
+              query($owner:String!, $repo:String!) {
+                repository(owner:$owner, name:$repo) {
+                  pullRequests(last:10, states:MERGED, orderBy:{field:UPDATED_AT, direction:DESC}) {
+                    nodes {
+                      number
+                      title
+                      mergedAt
+                      url
+                      mergeCommit {
+                        oid
+                      }
+                    }
+                  }
+                }
+              }
+            `;
+
+            const variables = {
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            };
+
+            const result = await github.graphql(query, variables);
+            const prs = result.repository.pullRequests.nodes;
+
+            // Try to find a PR that matches the current commit
+            let relatedPR = null;
+            const targetCommit = context.payload.after;
+
+            for (const pr of prs) {
+              if (pr.mergeCommit && pr.mergeCommit.oid === targetCommit) {
+                relatedPR = pr;
+                break;
+              }
+            }
+
+            if (relatedPR) {
+              core.setOutput('pr_number', relatedPR.number);
+              core.setOutput('pr_title', relatedPR.title);
+              core.setOutput('pr_url', relatedPR.url);
+              return relatedPR;
+            } else {
+              console.log('Could not find related PR for this commit');
+              return null;
+            }
+
+      - name: Comment on PR
+        if: steps.update-index.outputs.index_updated == 'true' && steps.find-pr.outputs.pr_number != ''
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+
+            if (!prNumber) {
+              console.log('No PR number found, skipping comment');
+              return;
+            }
+
+            const body = `## 🤖 Agent Index Updated
+
+            The agent index has been automatically updated following the merge of this PR.
+
+            [View the updated index](${context.payload.repository.html_url}/blob/main/agent_index.json)
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const issue = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Failed to update agent index',
+              body: `The workflow to update the agent index failed.
+              
+              Triggered by: ${context.payload.head_commit.message}
+              Commit: ${context.payload.head_commit.id}
+              Workflow run: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+              
+              Please investigate and fix the issue.`
+            };
+
+            github.rest.issues.create(issue);
