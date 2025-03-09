@@ -40,16 +40,16 @@ jobs:
           echo "Changed YAML/YML files in agents directory:"
           echo "$CHANGED_FILES"
 
-          # Save the list of changed files for later use
-          echo "$CHANGED_FILES" > changed_files.txt
+          # Create a file with the list of changed files
+          mkdir -p /tmp/workflow
+          echo "$CHANGED_FILES" > /tmp/workflow/changed_files.txt
 
           # Set outputs for use in later steps
-          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
           if [ -n "$CHANGED_FILES" ]; then
             echo "any_changed=true" >> $GITHUB_OUTPUT
+            # Store first file for simple reference
+            FIRST_FILE=$(echo "$CHANGED_FILES" | head -n 1)
+            echo "first_file=$FIRST_FILE" >> $GITHUB_OUTPUT
           else
             echo "any_changed=false" >> $GITHUB_OUTPUT
           fi
@@ -60,7 +60,7 @@ jobs:
         run: |
           echo "Updating agent index..."
           echo "Changed files:"
-          cat changed_files.txt
+          cat /tmp/workflow/changed_files.txt
 
           # Make the script executable
           chmod +x tools/agent_manager/manage_agents.sh
@@ -132,13 +132,17 @@ jobs:
             echo "The following files triggered this update:" >> $GITHUB_STEP_SUMMARY
             echo "```" >> $GITHUB_STEP_SUMMARY
             
-            # Display the list of changed files directly
-            if [ -f "changed_files.txt" ]; then
-              cat changed_files.txt >> $GITHUB_STEP_SUMMARY
+            # Hard-code at least one file if we know it
+            if [ -n "${{ steps.changed-files.outputs.first_file }}" ]; then
+              echo "${{ steps.changed-files.outputs.first_file }}" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Try to read from the temp file
+            if [ -f "/tmp/workflow/changed_files.txt" ]; then
+              cat /tmp/workflow/changed_files.txt >> $GITHUB_STEP_SUMMARY
             else
-              # Manually list the files from the PR
-              FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "agents/.*\.(yaml|yml)$" || echo "No YAML/YML files changed")
-              echo "$FILES" >> $GITHUB_STEP_SUMMARY
+              # Last resort: run the git command again
+              git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "agents/.*\.(yaml|yml)$" >> $GITHUB_STEP_SUMMARY || echo "No YAML/YML files changed" >> $GITHUB_STEP_SUMMARY
             fi
             
             echo "```" >> $GITHUB_STEP_SUMMARY
@@ -146,4 +150,17 @@ jobs:
             echo "ℹ️ No changes were needed to the agent index." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "The agent index is already up to date with the latest changes." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Debug - List changed files
+        if: always()
+        run: |
+          echo "Debug - Changed files from git command:"
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -E "agents/.*\.(yaml|yml)$" || echo "No matching files"
+
+          echo "Debug - Contents of temp file (if exists):"
+          if [ -f "/tmp/workflow/changed_files.txt" ]; then
+            cat /tmp/workflow/changed_files.txt
+          else
+            echo "Temp file does not exist"
           fi
