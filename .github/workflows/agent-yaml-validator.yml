@@ -1,0 +1,228 @@
+name: Agent YAML Validator
+
+on:
+  push:
+    paths:
+      - "agents/**/*.yaml"
+      - "agents/**/*.yml"
+  pull_request:
+    paths:
+      - "agents/**/*.yaml"
+      - "agents/**/*.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml yamale
+
+      - name: Find changed YAML files
+        id: changed-files
+        uses: tj-actions/changed-files@v35
+        with:
+          files: |
+            agents/**/*.yaml
+            agents/**/*.yml
+
+      - name: Validate changed YAML files
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          echo "Validating changed YAML files:"
+          echo "${{ steps.changed-files.outputs.all_changed_files }}"
+
+          # Create a directory for the validation results
+          mkdir -p validation_results
+
+          # Initialize error flag
+          ERROR_FOUND=0
+          ERROR_DETAILS=""
+
+          # Validate each changed file
+          for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
+            echo "Validating $file..."
+            
+            # Run validation and capture output
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+            
+            # Capture exit code
+            EXIT_CODE=$?
+            
+            # Print validation output
+            echo "$VALIDATION_OUTPUT"
+            
+            if [ $EXIT_CODE -ne 0 ]; then
+              ERROR_FOUND=1
+              
+              # Parse and format detailed error information
+              echo "::group::Detailed Validation Errors for $file"
+              
+              # Extract specific error types from the output
+              SCHEMA_ERRORS=$(echo "$VALIDATION_OUTPUT" | grep -E "YAML schema validation error|Error validating data" || echo "")
+              MISSING_FIELDS=$(echo "$VALIDATION_OUTPUT" | grep -E "Missing required fields:" || echo "")
+              INVALID_TAGS=$(echo "$VALIDATION_OUTPUT" | grep -E "Invalid tags:" || echo "")
+              PARSING_ERRORS=$(echo "$VALIDATION_OUTPUT" | grep -E "YAML parsing error:" || echo "")
+              OTHER_ERRORS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error:" | grep -v -E "YAML schema validation error|Missing required fields:|Invalid tags:|YAML parsing error:" || echo "")
+              
+              # Display categorized errors with better formatting
+              if [ ! -z "$SCHEMA_ERRORS" ]; then
+                echo "### Schema Validation Errors:"
+                echo "$SCHEMA_ERRORS" | sed 's/Error: //' | sed 's/^/- /'
+                echo ""
+              fi
+              
+              if [ ! -z "$MISSING_FIELDS" ]; then
+                echo "### Missing Required Fields:"
+                echo "$MISSING_FIELDS" | sed 's/Error: Missing required fields: /- /' | tr ',' '\n' | sed 's/^/- /'
+                echo ""
+              fi
+              
+              if [ ! -z "$INVALID_TAGS" ]; then
+                echo "### Invalid Tags:"
+                echo "$INVALID_TAGS" | sed 's/Error: Invalid tags: /- /' | tr ',' '\n' | sed 's/^/- /'
+                echo ""
+              fi
+              
+              if [ ! -z "$PARSING_ERRORS" ]; then
+                echo "### YAML Parsing Errors:"
+                echo "$PARSING_ERRORS" | sed 's/Error: //' | sed 's/^/- /'
+                echo ""
+              fi
+              
+              if [ ! -z "$OTHER_ERRORS" ]; then
+                echo "### Other Errors:"
+                echo "$OTHER_ERRORS" | sed 's/Error: //' | sed 's/^/- /'
+                echo ""
+              fi
+              
+              echo "::endgroup::"
+              
+              # Create detailed error summary for job summary
+              ERROR_DETAILS+="## ❌ Validation failed for $file\n\n"
+              
+              if [ ! -z "$SCHEMA_ERRORS" ]; then
+                ERROR_DETAILS+="### Schema Validation Errors:\n"
+                ERROR_DETAILS+="$(echo "$SCHEMA_ERRORS" | sed 's/Error: //' | sed 's/^/- /')\n\n"
+              fi
+              
+              if [ ! -z "$MISSING_FIELDS" ]; then
+                ERROR_DETAILS+="### Missing Required Fields:\n"
+                ERROR_DETAILS+="$(echo "$MISSING_FIELDS" | sed 's/Error: Missing required fields: //' | tr ',' '\n' | sed 's/^/- /')\n\n"
+              fi
+              
+              if [ ! -z "$INVALID_TAGS" ]; then
+                ERROR_DETAILS+="### Invalid Tags:\n"
+                ERROR_DETAILS+="$(echo "$INVALID_TAGS" | sed 's/Error: Invalid tags: //' | tr ',' '\n' | sed 's/^/- /')\n\n"
+              fi
+              
+              if [ ! -z "$PARSING_ERRORS" ]; then
+                ERROR_DETAILS+="### YAML Parsing Errors:\n"
+                ERROR_DETAILS+="$(echo "$PARSING_ERRORS" | sed 's/Error: //' | sed 's/^/- /')\n\n"
+              fi
+              
+              if [ ! -z "$OTHER_ERRORS" ]; then
+                ERROR_DETAILS+="### Other Errors:\n"
+                ERROR_DETAILS+="$(echo "$OTHER_ERRORS" | sed 's/Error: //' | sed 's/^/- /')\n\n"
+              fi
+              
+              # Create GitHub annotation for the error with more details
+              if [ ! -z "$MISSING_FIELDS" ]; then
+                MISSING=$(echo "$MISSING_FIELDS" | sed 's/Error: Missing required fields: //')
+                echo "::error file=$file::Missing required fields: $MISSING"
+              elif [ ! -z "$INVALID_TAGS" ]; then
+                INVALID=$(echo "$INVALID_TAGS" | sed 's/Error: Invalid tags: //')
+                echo "::error file=$file::Invalid tags: $INVALID"
+              elif [ ! -z "$SCHEMA_ERRORS" ]; then
+                SCHEMA=$(echo "$SCHEMA_ERRORS" | head -1 | sed 's/Error: //')
+                echo "::error file=$file::$SCHEMA"
+              elif [ ! -z "$PARSING_ERRORS" ]; then
+                PARSING=$(echo "$PARSING_ERRORS" | sed 's/Error: //')
+                echo "::error file=$file::$PARSING"
+              else
+                echo "::error file=$file::Validation failed. See job summary for details."
+              fi
+            else
+              echo "::notice file=$file::Validation successful for $file."
+            fi
+          done
+
+          # Save error details to a file for the job summary
+          if [ $ERROR_FOUND -eq 1 ]; then
+            echo -e "$ERROR_DETAILS" > validation_results/errors.md
+            exit 1
+          fi
+
+      - name: Create job summary with validation errors
+        if: failure()
+        run: |
+          if [ -f "validation_results/errors.md" ]; then
+            echo "# YAML Validation Errors" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following validation errors were found in your YAML files:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat validation_results/errors.md >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## How to Fix Common Issues" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Missing Required Fields" >> $GITHUB_STEP_SUMMARY
+            echo "All agent YAML files must include:" >> $GITHUB_STEP_SUMMARY
+            echo "- \`name\`: Agent name (max 40 chars)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`emoji\`: Exactly one character" >> $GITHUB_STEP_SUMMARY
+            echo "- \`description\`: Short description (max 65 chars)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`system_message\`: System message (max 1500 chars)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`label_color\`: Label color (max 15 chars)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`text_color\`: Text color (max 15 chars)" >> $GITHUB_STEP_SUMMARY
+            echo "- \`is_default\`: Boolean value" >> $GITHUB_STEP_SUMMARY
+            echo "- \`tags\`: List of valid tags (at least one required)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Invalid Tags" >> $GITHUB_STEP_SUMMARY
+            echo "Tags must be from the predefined list in tags.json. Check the file for valid options." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Validate all YAML files (on PR)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Validating all agent YAML files..."
+
+          # Run validation and capture output
+          VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+
+          # Capture exit code
+          EXIT_CODE=$?
+
+          # Print validation output
+          echo "$VALIDATION_OUTPUT"
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            # Parse and categorize errors for better display
+            echo "## ❌ Validation failed for one or more files" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract files with errors
+            FILES_WITH_ERRORS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error in|Validating" | grep -B 1 "Error" | grep "Validating" | sed 's/Validating //' | sed 's/\.\.\.$//')
+            
+            for file in $FILES_WITH_ERRORS; do
+              echo "### File: $file" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              
+              # Extract errors for this file
+              FILE_ERRORS=$(echo "$VALIDATION_OUTPUT" | grep -A 10 "Validating $file" | grep -E "Error:" | sed 's/Error: /- /')
+              
+              echo "$FILE_ERRORS" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            done
+            
+            exit 1
+          else
+            echo "## ✅ All files validated successfully" >> $GITHUB_STEP_SUMMARY
+          fi
