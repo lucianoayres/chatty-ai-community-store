@@ -18,7 +18,55 @@ system_message: "..." # Max 1500 characters - Defines agent personality and expe
 label_color: "\u001b[38;5;75m" # ANSI color code for name display in terminal
 text_color: "\u001b[38;5;252m" # ANSI color code for message text in terminal
 is_default: false # Boolean flag
+tags: # List of tags (at least one required)
+  - "tag1"
+  - "tag2"
+author: "Author Name" # Optional, max 40 characters
 ```
+
+### Required Fields
+
+All agent YAML files must include:
+
+- `name`: Agent name (max 40 chars)
+- `emoji`: Exactly one character
+- `description`: Short description (max 65 chars)
+- `system_message`: System message (max 1500 chars)
+- `label_color`: Label color (max 15 chars)
+- `text_color`: Text color (max 15 chars)
+- `is_default`: Boolean value
+- `tags`: List of valid tags (at least one required)
+
+### Optional Fields
+
+- `author`: Author name (max 40 chars)
+
+### Tags
+
+Tags must be selected from the predefined list in [`tags.json`](tags.json). Available categories include:
+
+- featured
+- historical
+- cultural
+- fictional
+- intellectuals
+- scientists
+- mythological
+- creative
+- artists
+- writers
+- philosophers
+- musicians
+- movie_characters
+- professional
+- business
+- technical
+- supportive
+- analytical
+- spiritual
+- sports
+- educational
+- miscellaneous
 
 ### Color Configuration
 
@@ -30,6 +78,77 @@ The `label_color` and `text_color` fields use ANSI escape codes for 256-color te
   - `\u001b[38;5;75m`: Light blue
   - `\u001b[38;5;252m`: Light gray
   - `\u001b[38;5;196m`: Red
+
+## Store Configuration
+
+The [`store_config.json`](store_config.json) file defines how agents are organized and displayed in the Chatty AI storefront interface. It controls the categorization, ordering, and visibility of agents.
+
+### Structure
+
+```json
+{
+  "storefrontSettings": {
+    "categories": [
+      {
+        "name": "Category Name",
+        "description": "Category description shown to users",
+        "tags": ["tag1", "tag2"],
+        "enabled": true,
+        "maxItems": 8
+      }
+      // Additional categories...
+    ]
+  }
+}
+```
+
+### Category Fields
+
+Each category in the store configuration includes:
+
+- `name`: Display name for the category
+- `description`: Short description of the category
+- `tags`: List of tags used to filter agents for this category
+- `enabled`: Boolean flag to show/hide the category
+- `maxItems`: Maximum number of agents to display in this category
+- `timeWindowDays`: (Optional) For time-based categories like "New Arrivals"
+
+### Default Categories
+
+The store includes several predefined categories:
+
+- Featured
+- New Arrivals
+- Creative Minds
+- Scientific Experts
+- Philosophical Thinkers
+- Historical Figures
+- Fictional Characters
+- Professional Guides
+- Sports & Athletics
+- Spiritual & Mystical
+
+## Validation Workflow
+
+The repository includes GitHub Actions workflows that automatically validate YAML files and update the agent index:
+
+### Agent YAML Validator
+
+This workflow runs whenever YAML files in the `agents/` directory are added or modified:
+
+1. Validates each YAML file against the schema
+2. Checks for required fields
+3. Verifies that tags are valid
+4. Provides detailed error information if validation fails
+
+### Agent Index Updater
+
+This workflow runs when a pull request with YAML changes is merged:
+
+1. Identifies which agent YAML files were changed
+2. Runs the agent manager script to update the index
+3. Commits and pushes any changes to the agent_index.json file
+4. Provides a summary of the update
 
 ## Agent Manager Tool
 
@@ -97,7 +216,11 @@ It includes:
 │           ├── generator.py   # Index generation module
 │           ├── validator.py   # YAML validation module
 │           └── update_index.py # Main Python script
-└── agent_index.json             # Generated index of all valid agents
+├── .github/workflows/      # GitHub Actions workflows
+│   ├── agent-yaml-validator.yml  # Validates YAML files
+│   └── agent-index-updater.yml   # Updates the agent index
+├── store_config.json       # Storefront configuration settings
+└── agent_index.json        # Generated index of all valid agents
 ```
 
 ## Development
@@ -115,24 +238,29 @@ It includes:
 
 1. Create a new YAML file in the [`agents/`](agents/) directory
 2. Follow the schema defined in [`schemas/agent.schema.yaml`](schemas/agent.schema.yaml)
-3. Run the agent manager tool to validate and index the new agent
-4. Test the agent in Chatty AI to ensure proper behavior
+3. Include at least one valid tag from the tags.json file
+4. Submit a pull request with your new agent
+5. The validation workflow will check your agent for errors
+6. Once merged, the index updater workflow will update the agent_index.json file
 
 ### Schema Updates
 
 - [`schemas/agent.schema.yaml`](schemas/agent.schema.yaml): Defines the structure for agent YAML files
 - [`schemas/index.schema.json`](schemas/index.schema.json): Defines the structure for the agent_index.json file
-- Both schemas are enforced by the agent manager tool
+- [`tags.json`](tags.json): Defines the valid tags for agent categorization
+- [`store_config.json`](store_config.json): Defines the storefront categories and display settings
+- All schemas are enforced by the validation workflow and agent manager tool
 
 ## Contributing
 
 When contributing new agents or modifications:
 
 1. Ensure all YAML files follow the schema
-2. Run the agent manager tool to validate changes
-3. Check the error log if validation fails
-4. Verify the agent_index.json is updated correctly
-5. Test new agents in Chatty AI before submitting
+2. Include at least one valid tag from the tags.json file
+3. Submit a pull request with your changes
+4. The validation workflow will check for errors
+5. Fix any validation errors before merging
+6. After merging, the index updater workflow will update the agent_index.json file
 
 ## License
 
