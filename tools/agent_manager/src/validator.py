@@ -158,8 +158,9 @@ class AgentValidator:
         if not os.path.exists(directory):
             raise FileNotFoundError(f"Directory not found: {directory}")
 
+        # Check for both .yaml and .yml file extensions
         yaml_files = sorted(
-            [f for f in os.listdir(directory) if f.endswith('.yaml')])
+            [f for f in os.listdir(directory) if f.endswith(('.yaml', '.yml'))])
         valid_data = []
         valid_files = []
         error_count = 0

@@ -159,6 +159,8 @@ jobs:
           else
             echo "validation_passed=true" >> $GITHUB_OUTPUT
             echo "✅ All agent files passed validation!"
+            # Debug output
+            echo "Setting validation_passed=true in GITHUB_OUTPUT"
           fi
 
       - name: Upload validation results
@@ -168,13 +170,29 @@ jobs:
           name: validation-results
           path: validation_logs/
 
+      - name: Debug validation output
+        run: |
+          echo "Validation output: ${{ steps.validation.outputs.validation_passed }}"
+          echo "Checking if we should run update_index step..."
+          if [[ "${{ steps.validation.outputs.validation_passed }}" == "true" ]]; then
+            echo "✅ validation_passed is true, should run update_index"
+          else
+            echo "❌ validation_passed is NOT true, would skip update_index"
+          fi
+
       - name: Run manage_agents.sh script
         id: update-index
-        if: steps.validation.outputs.validation_passed == 'true' && success()
+        if: steps.validation.outputs.validation_passed == 'true'
         run: |
-          echo "::group::Updating Agent Index"
-          # Only run if validation passed
-          bash tools/agent_manager/manage_agents.sh
+          echo "Running manage_agents.sh script to update index..."
+
+          # Make sure script is executable
+          chmod +x tools/agent_manager/manage_agents.sh
+
+          # Run the script with verbose output
+          bash -x tools/agent_manager/manage_agents.sh
+
+          echo "Script execution complete"
 
           # Check if index file was modified
           if git diff --name-only | grep -q "agent_index.json"; then
@@ -184,7 +202,6 @@ jobs:
             echo "index_updated=false" >> $GITHUB_OUTPUT
             echo "No changes to agent index."
           fi
-          echo "::endgroup::"
 
       - name: Commit updated index
         if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()

@@ -4,6 +4,7 @@ import sys
 import argparse
 from validator import AgentValidator
 from generator import IndexGenerator
+import os
 
 
 def update_index(json_schema_path: str, yaml_schema_path: str, tag_definitions_path: str = None) -> None:
@@ -23,8 +24,20 @@ def update_index(json_schema_path: str, yaml_schema_path: str, tag_definitions_p
 
         # Validate all YAML files
         agents_dir = 'agents'
+
+        # Debug: List all files in the agents directory
+        print("\nDebug: Files in agents directory:")
+        for f in os.listdir(agents_dir):
+            print(f"  - {f}")
+
         valid_data, valid_files, error_count = validator.validate_directory(
             agents_dir)
+
+        # Debug: Show validation results details
+        print("\nDebug: Validation results:")
+        print(f"  Valid files count: {len(valid_files)}")
+        print(f"  Valid files: {', '.join(valid_files)}")
+        print(f"  Error count: {error_count}")
 
         if not valid_files:
             print("No valid agent files found to process.", file=sys.stderr)
