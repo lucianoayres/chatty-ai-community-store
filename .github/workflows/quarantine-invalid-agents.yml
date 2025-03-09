@@ -23,6 +23,16 @@ jobs:
       files_quarantined: ${{ steps.quarantine-files.outputs.files_moved }}
 
     steps:
+      - name: Early exit check
+        id: early-exit
+        run: |
+          # Check if we were triggered by a failed workflow
+          if [ "${{ github.event.workflow_run.conclusion }}" != "failure" ]; then
+            echo "::notice::Skipping quarantine - triggering workflow completed successfully"
+            echo "Nothing to quarantine - workflow run was successful" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -460,16 +470,6 @@ jobs:
           else
             echo "📦 Invalid agent files were successfully quarantined" >> $GITHUB_STEP_SUMMARY
             echo "📝 An issue was created to track the quarantined files" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Early exit check
-        id: early-exit
-        run: |
-          # Check if we were triggered by a failed workflow
-          if [ "${{ github.event.workflow_run.conclusion }}" != "failure" ]; then
-            echo "::notice::Skipping quarantine - triggering workflow completed successfully"
-            echo "Nothing to quarantine - workflow run was successful" >> $GITHUB_STEP_SUMMARY
-            exit 0
           fi
 
       - name: Final status check

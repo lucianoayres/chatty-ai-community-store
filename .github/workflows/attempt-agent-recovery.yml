@@ -1,4 +1,4 @@
-name: Auto-Recovery for Quarantined Agent Files
+name: Check & Attempt Agent Recovery
 
 on:
   workflow_run:
