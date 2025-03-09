@@ -70,6 +70,7 @@ jobs:
           echo "::group::Full YAML Schema Validation"
           mkdir -p validation_logs
           VALIDATION_LOG="validation_logs/validation_results.txt"
+          ERROR_SUMMARY="validation_logs/error_summary.txt"
 
           # Set up environment for validator
           export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
@@ -82,6 +83,10 @@ jobs:
             exit 0
           fi
 
+          # Initialize error summary
+          echo "# Validation Results" > $ERROR_SUMMARY
+          echo "" >> $ERROR_SUMMARY
+
           # Validate each changed file
           echo "Validating agent files:" | tee -a $VALIDATION_LOG
           echo "$CHANGED_FILES" | tee -a $VALIDATION_LOG
@@ -90,42 +95,85 @@ jobs:
           FAIL_COUNT=0
 
           for file in $CHANGED_FILES; do
-            echo "Validating $file..." | tee -a $VALIDATION_LOG
+            echo "🔍 Validating $file..." | tee -a $VALIDATION_LOG
+            echo "=============================================" | tee -a $VALIDATION_LOG
             
-            # Run the validator on the file
-            python tools/agent_manager/src/validator.py \
+            # Run validator and capture ALL output
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
-              --output-format github-actions \
-              2>&1 | tee -a $VALIDATION_LOG
-              
-            # Check if validation failed
-            if [ ${PIPESTATUS[0]} -ne 0 ]; then
+              --verbose \
+              2>&1)
+            
+            VALIDATION_EXIT_CODE=$?
+            
+            # Save complete output to log
+            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
+            
+            # Process validation results
+            if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
-              echo "::error file=$file::Validation failed. See logs for details."
+              
+              # Add to error summary
+              echo "## ❌ $file" | tee -a $ERROR_SUMMARY
+              echo '```' | tee -a $ERROR_SUMMARY
+              
+              # Extract and display ALL validation errors
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -A 2 -B 1 -E "Error:|Warning:|Missing|Invalid|failed|required|validation error|schema validation")
+              
+              if [ -n "$ERROR_DETAILS" ]; then
+                # Display full error details in both workflow and summary
+                echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY >&2
+                
+                # Create GitHub annotations for each error
+                echo "$ERROR_DETAILS" | while read -r line; do
+                  if [[ $line =~ Error:|Warning:|Missing|Invalid|failed|required|validation ]]; then
+                    echo "::error file=$file::$line"
+                  fi
+                done
+              else
+                # If no specific errors found, show full output
+                echo "$VALIDATION_OUTPUT" | tee -a $ERROR_SUMMARY >&2
+              fi
+              
+              echo '```' | tee -a $ERROR_SUMMARY
+              echo "" | tee -a $ERROR_SUMMARY
+            else
+              echo "✅ File passed validation: $file" | tee -a $VALIDATION_LOG
+              echo "## ✅ $file" >> $ERROR_SUMMARY
+              echo "Passed all validation checks" >> $ERROR_SUMMARY
+              echo "" >> $ERROR_SUMMARY
             fi
             
+            echo "=============================================" | tee -a $VALIDATION_LOG
             echo "" | tee -a $VALIDATION_LOG
           done
 
-          # Determine overall result
+          # Show final results
           if [ $FAIL_COUNT -gt 0 ]; then
-            echo "::set-output name=validation_failed::true"
-            echo "::set-output name=fail_count::$FAIL_COUNT"
-            echo "::error::$FAIL_COUNT agent files failed validation."
+            echo "::error::❌ Validation failed for $FAIL_COUNT file(s)"
+            echo "validation_failed=true" >> $GITHUB_OUTPUT
+            echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
+            
+            # Save error summary
+            echo "error_summary<<EOF" >> $GITHUB_OUTPUT
+            cat $ERROR_SUMMARY >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
             exit 1
           else
-            echo "::set-output name=validation_failed::false"
-            echo "All agent files passed validation! ✅"
+            echo "✅ All files passed validation!"
+            echo "validation_failed=false" >> $GITHUB_OUTPUT
           fi
           echo "::endgroup::"
 
-      - name: Upload validation results as artifact
+      - name: Upload validation results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: validation-results
-          path: validation_logs/validation_results.txt
+          path: validation_logs/
 
       - name: Post validation results as comment
         if: always()
@@ -137,35 +185,29 @@ jobs:
             const validationFailed = '${{ steps.validator.outputs.validation_failed }}' === 'true';
             const failCount = '${{ steps.validator.outputs.fail_count }}';
 
-            let validationLog = '';
+            let errorSummary = '';
             try {
-              validationLog = fs.readFileSync('validation_logs/validation_results.txt', 'utf8');
-              // Truncate if too long for a comment
-              if (validationLog.length > 50000) {
-                validationLog = validationLog.substring(0, 50000) + '\n\n... (output truncated)';
-              }
+              errorSummary = fs.readFileSync('validation_logs/error_summary.txt', 'utf8');
             } catch (error) {
-              validationLog = 'Error reading validation log: ' + error.message;
+              errorSummary = 'Error reading validation summary: ' + error.message;
             }
 
             let body = '## Agent Validation Results\n\n';
 
             if (validationFailed) {
-              body += `❌ **Validation Failed**: ${failCount} file(s) did not pass validation.\n\n`;
-              body += 'Please fix the issues below before this PR can be reviewed:\n\n';
+              body += `### ❌ Validation Failed\n\n`;
+              body += `${failCount} file(s) did not pass validation.\n\n`;
+              body += '### Detailed Results\n\n';
+              body += errorSummary;
+              body += '\n\n### Next Steps\n\n';
+              body += '1. Review the validation errors above\n';
+              body += '2. Fix the issues in your agent file(s)\n';
+              body += '3. Push the changes to update this PR\n';
+              body += '4. Wait for validation to run again\n\n';
+              body += '> Note: Your PR cannot be merged until all validation checks pass.';
             } else {
-              body += '✅ **All files passed validation!**\n\n';
-            }
-
-            body += '```\n' + validationLog + '\n```\n\n';
-
-            body += '### Next Steps\n\n';
-            if (validationFailed) {
-              body += '1. Fix the validation errors highlighted above\n';
-              body += '2. Push the changes to update this PR\n';
-              body += '3. The validation will automatically run again\n';
-            } else {
-              body += 'This PR is now ready for manual review.';
+              body += '### ✅ All Files Passed Validation!\n\n';
+              body += 'Your agent files are properly formatted and ready for review.';
             }
 
             github.rest.issues.createComment({
@@ -184,39 +226,25 @@ jobs:
             const validationFailed = '${{ steps.validator.outputs.validation_failed }}' === 'true';
 
             // Remove existing validation labels
-            const issue = { owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number };
-            const existingLabels = ['validation-passed', 'validation-failed', 'needs-review'];
-
-            for (const label of existingLabels) {
+            const labels = ['validation-failed', 'validation-passed'];
+            for (const label of labels) {
               try {
                 await github.rest.issues.removeLabel({
-                  ...issue,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
                   name: label
                 });
-              } catch (error) {
-                // Label might not exist, which is fine
-                console.log(`Note: Could not remove label ${label}: ${error.message}`);
+              } catch (e) {
+                // Ignore errors from non-existent labels
               }
             }
 
-            // Add appropriate labels
-            if (validationFailed) {
-              try {
-                await github.rest.issues.addLabels({
-                  ...issue,
-                  labels: ['validation-failed']
-                });
-              } catch (error) {
-                console.log(`Error adding validation-failed label: ${error.message}`);
-              }
-            } else {
-              // If validation passes, add both validation-passed and needs-review labels
-              try {
-                await github.rest.issues.addLabels({
-                  ...issue,
-                  labels: ['validation-passed', 'needs-review']
-                });
-              } catch (error) {
-                console.log(`Error adding labels: ${error.message}`);
-              }
-            }
+            // Add appropriate label
+            const newLabel = validationFailed ? 'validation-failed' : 'validation-passed';
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [newLabel]
+            });
