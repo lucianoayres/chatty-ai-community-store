@@ -47,32 +47,76 @@ jobs:
           # Validate each changed file
           mkdir -p validation_logs
           VALIDATION_LOG="validation_logs/validation_results.txt"
+          ERROR_SUMMARY="validation_logs/error_summary.txt"
           echo "Validation results:" | tee -a $VALIDATION_LOG
+          echo "====================" | tee -a $VALIDATION_LOG
+          echo "" | tee -a $VALIDATION_LOG
 
           FAIL_COUNT=0
+          echo "" > $ERROR_SUMMARY
 
           for file in $CHANGED_FILES; do
             echo "Validating $file..." | tee -a $VALIDATION_LOG
+            echo "--------------------" | tee -a $VALIDATION_LOG
             
-            # Run the validator on the file
-            python tools/agent_manager/src/validator.py \
+            # Run the validator on the file and capture output
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
-              2>&1 | tee -a $VALIDATION_LOG
+              --verbose \
+              2>&1)
+            
+            VALIDATION_EXIT_CODE=$?
+            echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
               
             # Check if validation failed
-            if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
-              echo "Validation failed for $file" | tee -a $VALIDATION_LOG
+              
+              # Add error details to summary for easy reference
+              echo "❌ File: $file" | tee -a $ERROR_SUMMARY
+              
+              # Extract and format error messages for better visibility
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error|Invalid|failed|missing|required" | sed 's/^/  /')
+              
+              if [ -n "$ERROR_DETAILS" ]; then
+                echo "  Error details:" | tee -a $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY
+              else
+                echo "  Unknown validation error. See logs for details." | tee -a $ERROR_SUMMARY
+              fi
+              
+              # Add separator for readability
+              echo "" | tee -a $ERROR_SUMMARY
+              
+              # Add error annotation for GitHub Actions UI
+              echo "::error file=$file::Validation failed: $(echo "$ERROR_DETAILS" | head -n 1)"
+            else
+              echo "✅ File passed validation: $file" | tee -a $ERROR_SUMMARY
             fi
+            
+            echo "" | tee -a $VALIDATION_LOG
+            echo "" | tee -a $VALIDATION_LOG
           done
 
           # Determine overall result
           if [ $FAIL_COUNT -gt 0 ]; then
+            # Print error summary to make it clearly visible in workflow logs
+            echo "============================================="
+            echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues"
+            echo "============================================="
+            echo ""
+            cat $ERROR_SUMMARY
+            echo ""
+            echo "See validation logs for complete details"
+            
             echo "validation_passed=false" >> $GITHUB_OUTPUT
             echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
-            echo "❌ $FAIL_COUNT agent files failed validation." | tee -a $VALIDATION_LOG
+            echo "error_summary<<EOF" >> $GITHUB_OUTPUT
+            cat $ERROR_SUMMARY >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
             exit 1
           else
             echo "validation_passed=true" >> $GITHUB_OUTPUT
@@ -209,9 +253,14 @@ jobs:
           script: |
             const fs = require('fs');
 
+            // Get both the detailed logs and the error summary
             let validationLog = '';
+            let errorSummary = '';
+
             try {
               validationLog = fs.readFileSync('validation_logs/validation_results.txt', 'utf8');
+              errorSummary = '${{ steps.validation.outputs.error_summary }}';
+              
               // Truncate if too long for an issue
               if (validationLog.length > 30000) {
                 validationLog = validationLog.substring(0, 30000) + '\n\n... (output truncated)';
@@ -232,7 +281,13 @@ jobs:
               Commit: ${context.payload.head_commit.id}
               Workflow run: ${context.payload.repository.html_url}/actions/runs/${context.runId}
               
-              ## Validation Results
+              ## Validation Error Summary
+              
+              \`\`\`
+              ${errorSummary}
+              \`\`\`
+              
+              ## Complete Validation Log
               
               \`\`\`
               ${validationLog}
