@@ -29,21 +29,35 @@ jobs:
         run: |
           pip install pyyaml jsonschema yamale
 
-      - name: Validate changed agent files
-        id: validation
-        continue-on-error: false
+      # STAGE 1: VALIDATION
+      - name: "📋 STAGE 1: VALIDATE AGENT FILES"
+        run: echo "Beginning validation of changed agent files..."
+
+      - name: Find changed agent files
+        id: find-files
         run: |
-          # Get list of changed files (removed grouping to ensure errors are visible)
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "^agents/" | grep -E "\.(yaml|yml)$" || echo "")
           echo "Changed agent files:"
           echo "$CHANGED_FILES"
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No agent YAML files were changed."
-            echo "validation_passed=true" >> $GITHUB_OUTPUT
-            exit 0
+            echo "changed_files_count=0" >> $GITHUB_OUTPUT
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            COUNT=$(echo "$CHANGED_FILES" | wc -l)
+            echo "changed_files_count=$COUNT" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "files<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           fi
 
+      - name: Validate changed agent files
+        id: validation
+        if: steps.find-files.outputs.has_changes == 'true'
+        continue-on-error: false
+        run: |
           # Setup validation environment
           export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
 
@@ -58,7 +72,10 @@ jobs:
           FAIL_COUNT=0
           echo "" > $ERROR_SUMMARY
 
-          for file in $CHANGED_FILES; do
+          # Get the list of files to validate
+          IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
+
+          for file in "${FILES[@]}"; do
             echo "===== Validating $file ====="
             
             # Run the validator with all output directly visible
@@ -159,30 +176,32 @@ jobs:
           else
             echo "validation_passed=true" >> $GITHUB_OUTPUT
             echo "✅ All agent files passed validation!"
-            # Debug output
-            echo "Setting validation_passed=true in GITHUB_OUTPUT"
           fi
 
       - name: Upload validation results
-        if: steps.validation.outputs.validation_passed == 'false' || failure()
+        if: steps.find-files.outputs.has_changes == 'true' && (steps.validation.outputs.validation_passed == 'false' || failure())
         uses: actions/upload-artifact@v4
         with:
           name: validation-results
           path: validation_logs/
 
-      - name: Debug validation output
+      - name: Validation summary
+        if: steps.find-files.outputs.has_changes == 'true'
         run: |
-          echo "Validation output: ${{ steps.validation.outputs.validation_passed }}"
-          echo "Checking if we should run update_index step..."
           if [[ "${{ steps.validation.outputs.validation_passed }}" == "true" ]]; then
-            echo "✅ validation_passed is true, should run update_index"
+            echo "✅ Validation PASSED - All agent files are valid"
           else
-            echo "❌ validation_passed is NOT true, would skip update_index"
+            echo "❌ Validation FAILED - Some files had issues"
           fi
+
+      # STAGE 2: INDEX UPDATE
+      - name: "📝 STAGE 2: UPDATE AGENT INDEX"
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true'
+        run: echo "All files validated successfully! Beginning index update..."
 
       - name: Run manage_agents.sh script
         id: update-index
-        if: steps.validation.outputs.validation_passed == 'true'
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true'
         run: |
           echo "Running manage_agents.sh script to update index..."
 
@@ -203,8 +222,13 @@ jobs:
             echo "No changes to agent index."
           fi
 
+      # STAGE 3: COMMIT & NOTIFY
+      - name: "🚀 STAGE 3: COMMIT & NOTIFY"
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true'
+        run: echo "Index updated successfully! Committing changes and notifying..."
+
       - name: Commit updated index
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
         run: |
           # Configure git
           git config --local user.email "action@github.com"
@@ -218,7 +242,7 @@ jobs:
           git push
 
       - name: Find related PR
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && success()
         id: find-pr
         uses: actions/github-script@v7
         with:
@@ -273,7 +297,7 @@ jobs:
             }
 
       - name: Comment on PR
-        if: steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && steps.find-pr.outputs.pr_number != '' && success()
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'true' && steps.update-index.outputs.index_updated == 'true' && steps.find-pr.outputs.pr_number != '' && success()
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -299,8 +323,9 @@ jobs:
               body: body
             });
 
+      # ERROR HANDLING
       - name: Create issue for validation failure
-        if: steps.validation.outputs.validation_passed == 'false'
+        if: steps.find-files.outputs.has_changes == 'true' && steps.validation.outputs.validation_passed == 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -348,7 +373,7 @@ jobs:
             github.rest.issues.create(issue);
 
       - name: Notify on failure
-        if: failure() && steps.validation.outputs.validation_passed != 'false'
+        if: steps.find-files.outputs.has_changes == 'true' && failure() && steps.validation.outputs.validation_passed != 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
