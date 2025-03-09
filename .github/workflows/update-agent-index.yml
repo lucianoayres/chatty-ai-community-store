@@ -66,9 +66,90 @@ jobs:
           VALIDATION_LOG="validation_logs/validation_results.txt"
           ERROR_SUMMARY="validation_logs/error_summary.txt"
 
-          echo "Validation results:" > $VALIDATION_LOG
-          echo "====================" >> $VALIDATION_LOG
-          echo "" >> $VALIDATION_LOG
+          # Create a simple Python script to validate and print errors
+          cat > validate_and_print.py << 'EOF'
+          #!/usr/bin/env python3
+          import sys
+          import os
+          import yaml
+          from validator import AgentValidator
+
+          def validate_file(file_path, schema_path, tag_definitions_path):
+              print(f"\n\n===== VALIDATING {file_path} =====")
+              
+              # Create validator
+              validator = AgentValidator(
+                  schema_path,
+                  tag_definitions_path=tag_definitions_path,
+                  error_log_path="validation_logs/errors.log"
+              )
+              
+              # Validate file
+              data, is_valid = validator.validate_yaml(file_path)
+              
+              if is_valid:
+                  print(f"✅ {file_path} is valid")
+                  return True
+              else:
+                  print(f"\n❌ VALIDATION FAILED: {file_path}")
+                  print("==================================================")
+                  
+                  # Try to load the file to get more specific errors
+                  try:
+                      with open(file_path, 'r') as f:
+                          file_content = f.read()
+                          
+                      try:
+                          data = yaml.safe_load(file_content)
+                          
+                          # Check if it's a dictionary
+                          if not isinstance(data, dict):
+                              print("Error: YAML file must contain a dictionary")
+                          
+                          # Check required fields
+                          required_fields = ['name', 'emoji', 'description', 'system_message',
+                                           'label_color', 'text_color', 'is_default', 'tags']
+                          missing_fields = [field for field in required_fields if field not in data]
+                          if missing_fields:
+                              print(f"Error: Missing required fields: {', '.join(missing_fields)}")
+                          
+                          # Check tags
+                          if 'tags' in data:
+                              if not isinstance(data['tags'], list):
+                                  print("Error: 'tags' field must be a list")
+                              elif not validator.tag_manager.validate_tags(data['tags']):
+                                  invalid_tags = [t for t in data['tags'] 
+                                                if t not in validator.tag_manager.get_valid_tags()]
+                                  print(f"Error: Invalid tags: {', '.join(invalid_tags)}")
+                      except yaml.YAMLError as e:
+                          print(f"Error: YAML parsing error: {str(e)}")
+                  except Exception as e:
+                      print(f"Error: Failed to analyze file: {str(e)}")
+                  
+                  print("==================================================\n")
+                  return False
+
+          def main():
+              if len(sys.argv) < 4:
+                  print("Usage: python validate_and_print.py <file_path> <schema_path> <tag_definitions_path>")
+                  sys.exit(1)
+                  
+              file_path = sys.argv[1]
+              schema_path = sys.argv[2]
+              tag_definitions_path = sys.argv[3]
+              
+              if not os.path.exists(file_path):
+                  print(f"Error: File not found: {file_path}")
+                  sys.exit(1)
+                  
+              success = validate_file(file_path, schema_path, tag_definitions_path)
+              sys.exit(0 if success else 1)
+
+          if __name__ == "__main__":
+              main()
+          EOF
+
+          chmod +x validate_and_print.py
 
           # Initialize error summary
           echo "# Validation Error Summary" > $ERROR_SUMMARY
@@ -80,71 +161,26 @@ jobs:
           IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
 
           for file in "${FILES[@]}"; do
-            echo "===== Validating $file ====="
+            # Run the validator script
+            python validate_and_print.py "$file" "schemas/agent.schema.yaml" "tags.json" | tee -a $VALIDATION_LOG
             
-            # Run the validator directly to the console
-            python tools/agent_manager/src/validator.py \
-              --yaml-schema schemas/agent.schema.yaml \
-              --file "$file" \
-              --tag-definitions tags.json \
-              --verbose
-            
-            VALIDATION_EXIT_CODE=$?
-            
-            # Capture the same output for logs
-            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
-              --yaml-schema schemas/agent.schema.yaml \
-              --file "$file" \
-              --tag-definitions tags.json \
-              --verbose \
-              2>&1)
-            
-            # Save to log file
-            echo "Validating $file..." >> $VALIDATION_LOG
-            echo "-----------------------------------------" >> $VALIDATION_LOG
-            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
-            echo "-----------------------------------------" >> $VALIDATION_LOG
-            echo "" >> $VALIDATION_LOG
+            VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
             
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
               
-              # Add error details to summary for easy reference
-              echo "❌ File: $file" | tee -a $ERROR_SUMMARY
-              
-              # Extract errors and display them directly
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -10)
-              
-              if [ -n "$ERROR_DETAILS" ]; then
-                # Force display error to stderr
-                echo "VALIDATION ERRORS:" 
-                echo "$ERROR_DETAILS"
-                echo ""
-                
-                # Add to summary
-                echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
-              else
-                # If no specific errors found, display the last few lines
-                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5)
-                
-                # Force display error to stderr
-                echo "VALIDATION ERRORS:" 
-                echo "$ERROR_DETAILS"
-                echo ""
-                
-                # Add to summary
-                echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
-              fi
-              
+              # Add to error summary
+              echo "## ❌ File: $file" >> $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
+              python validate_and_print.py "$file" "schemas/agent.schema.yaml" "tags.json" | grep "Error:" >> $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
               echo "" >> $ERROR_SUMMARY
             else
-              echo "✅ File passed validation: $file"
+              echo "## ✅ File: $file" >> $ERROR_SUMMARY
+              echo "Passed all validation checks" >> $ERROR_SUMMARY
+              echo "" >> $ERROR_SUMMARY
             fi
-            
-            echo ""
           done
 
           # Determine overall result
