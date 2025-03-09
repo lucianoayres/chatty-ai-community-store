@@ -26,8 +26,30 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify changes in agents directory
+        id: verify-changes
+        run: |
+          # Just a safety check to ensure we only revert changes that affect agent files
+          echo "Verifying that the changes were in the agents directory..."
+
+          # Fetch the commit details from the original workflow
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+
+          # Check if this commit affected files in the agents directory (both .yaml and .yml extensions)
+          CHANGED_AGENT_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_SHA | grep "^agents/" | grep -E "\.(yaml|yml)$" || echo "")
+
+          if [ -z "$CHANGED_AGENT_FILES" ]; then
+            echo "No agent YAML files were changed in this commit. Skipping revert."
+            echo "should_revert=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found changed agent files:"
+            echo "$CHANGED_AGENT_FILES"
+            echo "should_revert=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Download workflow logs
         id: download-logs
+        if: steps.verify-changes.outputs.should_revert == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -78,6 +100,7 @@ jobs:
 
       - name: Check if validation failed
         id: check-validation
+        if: steps.verify-changes.outputs.should_revert == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -135,7 +158,7 @@ jobs:
             return validationFailed;
 
       - name: Revert invalid commit
-        if: steps.check-validation.outputs.validation_failed == 'true'
+        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Configure git
           git config --local user.email "action@github.com"
@@ -146,8 +169,8 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%B)
           COMMIT_SHORT=$(git rev-parse --short HEAD)
 
-          # Get changed files
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep '\.yaml$' || echo "")
+          # Get changed files (both .yaml and .yml extensions)
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E "\.(yaml|yml)$" || echo "")
           if [ -n "$CHANGED_FILES" ]; then
             echo "Changed YAML files in this commit:"
             echo "$CHANGED_FILES"
@@ -171,7 +194,7 @@ jobs:
           git push
 
       - name: Create issue about the revert
-        if: steps.check-validation.outputs.validation_failed == 'true'
+        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Create issue template
           cat > issue_body.md << 'EOL'
@@ -209,7 +232,35 @@ jobs:
           EOL
 
           # Replace variables in the template
-          ERROR_SUMMARY="$(cat logs/extracted/*validation* 2>/dev/null | grep -A 10 "VALIDATION ERRORS" || echo "No specific error details found")"
+          # Better error extraction from logs using multiple patterns
+          ERROR_SUMMARY=""
+          VALIDATION_PATTERNS=(
+            'VALIDATION ERRORS'
+            'Error:'
+            'Missing required fields'
+            'Validation failed'
+            'validation error'
+            'YAML schema validation error'
+          )
+
+          # Try multiple methods to find error info
+          for PATTERN in "${VALIDATION_PATTERNS[@]}"; do
+            # Try to extract error info using grep with context
+            FOUND_ERRORS=$(find logs/extracted -type f -exec grep -A 10 -B 2 "$PATTERN" {} \; 2>/dev/null)
+            if [ -n "$FOUND_ERRORS" ]; then
+              # Append to our error summary
+              ERROR_SUMMARY="${ERROR_SUMMARY}${FOUND_ERRORS}\n\n"
+            fi
+          done
+
+          # Fallback if still no errors found
+          if [ -z "$ERROR_SUMMARY" ]; then
+            ERROR_SUMMARY="$(cat logs/extracted/*validation* 2>/dev/null | grep -A 10 -B 5 -E "Error|fail|invalid" || echo "No specific error details found")"
+          fi
+
+          # Trim to reasonable size if needed
+          ERROR_SUMMARY=$(echo "$ERROR_SUMMARY" | head -n 30)
+
           WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
           REVERT_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
@@ -224,7 +275,7 @@ jobs:
           mv issue_body_with_errors.md issue_body.md
 
       - name: Submit issue
-        if: steps.check-validation.outputs.validation_failed == 'true'
+        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}

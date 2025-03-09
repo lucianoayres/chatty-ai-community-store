@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "agents/**.yaml"
+      - "agents/**.yml"
 
 jobs:
   update-index:
@@ -33,7 +34,7 @@ jobs:
         continue-on-error: false
         run: |
           # Get list of changed files (removed grouping to ensure errors are visible)
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "^agents/.*\.yaml$" || echo "")
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "^agents/" | grep -E "\.(yaml|yml)$" || echo "")
           echo "Changed agent files:"
           echo "$CHANGED_FILES"
 
