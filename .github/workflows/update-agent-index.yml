@@ -80,9 +80,18 @@ jobs:
           IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
 
           for file in "${FILES[@]}"; do
-            echo "===== Validating $file =====" | tee -a $VALIDATION_LOG
+            echo "===== Validating $file ====="
             
-            # Run the validator with all output directly visible and capture it
+            # Run the validator directly to the console
+            python tools/agent_manager/src/validator.py \
+              --yaml-schema schemas/agent.schema.yaml \
+              --file "$file" \
+              --tag-definitions tags.json \
+              --verbose
+            
+            VALIDATION_EXIT_CODE=$?
+            
+            # Capture the same output for logs
             VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
@@ -90,44 +99,52 @@ jobs:
               --verbose \
               2>&1)
             
-            VALIDATION_EXIT_CODE=$?
-            
-            # Always show the full validation output in the logs
-            echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
+            # Save to log file
+            echo "Validating $file..." >> $VALIDATION_LOG
+            echo "-----------------------------------------" >> $VALIDATION_LOG
+            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
+            echo "-----------------------------------------" >> $VALIDATION_LOG
+            echo "" >> $VALIDATION_LOG
             
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
               
-              # Add to error summary
-              echo "## ❌ File: $file" | tee -a $ERROR_SUMMARY
-              echo '```' >> $ERROR_SUMMARY
+              # Add error details to summary for easy reference
+              echo "❌ File: $file" | tee -a $ERROR_SUMMARY
               
-              # Extract specific error messages from the validator output
-              # Look for lines that start with "Error:" which contain the specific validation errors
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|YAML (parsing|schema) (error|validation)|Missing required|Invalid tags|validation failed" || echo "Unknown validation error")
+              # Extract errors and display them directly
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -10)
               
-              # Display the specific error details prominently
-              echo "VALIDATION ERRORS for $file:" >&2
-              echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY >&2
-              echo "" >&2
+              if [ -n "$ERROR_DETAILS" ]; then
+                # Force display error to stderr
+                echo "VALIDATION ERRORS:" 
+                echo "$ERROR_DETAILS"
+                echo ""
+                
+                # Add to summary
+                echo "  Error details:" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
+              else
+                # If no specific errors found, display the last few lines
+                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5)
+                
+                # Force display error to stderr
+                echo "VALIDATION ERRORS:" 
+                echo "$ERROR_DETAILS"
+                echo ""
+                
+                # Add to summary
+                echo "  Error details:" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
+              fi
               
-              # Create GitHub error annotations for each specific error
-              echo "$ERROR_DETAILS" | while read -r line; do
-                echo "::error file=$file::$line"
-              done
-              
-              echo '```' >> $ERROR_SUMMARY
               echo "" >> $ERROR_SUMMARY
             else
-              echo "✅ File passed validation: $file" | tee -a $VALIDATION_LOG
-              echo "## ✅ File: $file" >> $ERROR_SUMMARY
-              echo "Passed all validation checks" >> $ERROR_SUMMARY
-              echo "" >> $ERROR_SUMMARY
+              echo "✅ File passed validation: $file"
             fi
             
-            echo "-----------------------------------------" | tee -a $VALIDATION_LOG
-            echo "" | tee -a $VALIDATION_LOG
+            echo ""
           done
 
           # Determine overall result
@@ -135,15 +152,11 @@ jobs:
             # Print error summary to make it clearly visible in workflow logs
             echo ""
             echo "============================================="
-            echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues" >&2
+            echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues"
             echo "============================================="
             echo ""
             # Display the error summary in the console
-            echo "# Validation Error Summary"
             cat $ERROR_SUMMARY
-            
-            # Create GitHub annotations for key errors
-            echo "::error::Validation failed with $FAIL_COUNT error(s). See details above."
             
             # Save the outputs
             echo "validation_passed=false" >> $GITHUB_OUTPUT
@@ -176,9 +189,6 @@ jobs:
       - name: Validation summary
         if: steps.find-files.outputs.has_changes == 'true' && always()
         run: |
-          # Setup validation environment
-          export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
-
           echo "=== VALIDATION SUMMARY ==="
           if [[ "${{ steps.validation.outputs.validation_passed }}" == "true" ]]; then
             echo "✅ Validation PASSED - All agent files are valid"
@@ -191,34 +201,6 @@ jobs:
               echo "=== VALIDATION ERROR DETAILS ==="
               cat validation_logs/error_summary.txt
               echo "================================"
-            else
-              # Try to extract error details directly from the validation output
-              echo ""
-              echo "# Validation Error Summary"
-              
-              # Get the list of files that were validated
-              IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
-              
-              for file in "${FILES[@]}"; do
-                # Run the validator again to get the error details
-                VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
-                  --yaml-schema schemas/agent.schema.yaml \
-                  --file "$file" \
-                  --tag-definitions tags.json \
-                  --verbose \
-                  2>&1)
-                
-                VALIDATION_EXIT_CODE=$?
-                
-                if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
-                  echo ""
-                  echo "## ❌ File: $file"
-                  echo '```'
-                  # Extract specific error messages
-                  echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|YAML (parsing|schema) (error|validation)|Missing required|Invalid tags|validation failed" || echo "Unknown validation error"
-                  echo '```'
-                fi
-              done
             fi
           fi
 
