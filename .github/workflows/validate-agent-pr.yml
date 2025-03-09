@@ -108,7 +108,7 @@ jobs:
             
             VALIDATION_EXIT_CODE=$?
             
-            # Always show the full validation output
+            # Always show the full validation output in the logs
             echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
             
             # Process validation results
@@ -119,16 +119,22 @@ jobs:
               echo "## ❌ $file" | tee -a $ERROR_SUMMARY
               echo '```' >> $ERROR_SUMMARY
               
-              # Extract all error messages from the output
-              echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|Missing required|Invalid|YAML (parsing|schema) (error|validation)|validation error|failed validation" | while read -r line; do
-                # Create GitHub error annotation
+              # Extract specific error messages from the validator output
+              # Look for lines that start with "Error:" which contain the specific validation errors
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|YAML (parsing|schema) (error|validation)|Missing required|Invalid tags|validation failed" || echo "Unknown validation error")
+              
+              # Display the specific error details prominently
+              echo "VALIDATION ERRORS for $file:" >&2
+              echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY >&2
+              echo "" >&2
+              
+              # Create GitHub error annotations for each specific error
+              echo "$ERROR_DETAILS" | while read -r line; do
                 echo "::error file=$file::$line"
-                # Add to error summary
-                echo "$line" >> $ERROR_SUMMARY
               done
               
               # If no specific errors found in grep, show the full output
-              if ! echo "$VALIDATION_OUTPUT" | grep -q -E "^Error:|^Warning:|Missing required|Invalid|YAML|validation"; then
+              if [ -z "$ERROR_DETAILS" ]; then
                 echo "Full validation output:" >> $ERROR_SUMMARY
                 echo "$VALIDATION_OUTPUT" >> $ERROR_SUMMARY
               fi

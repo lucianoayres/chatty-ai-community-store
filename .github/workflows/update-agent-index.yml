@@ -61,10 +61,18 @@ jobs:
           # Setup validation environment
           export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
 
-          # Validate each changed file
-          echo "Validating agent files:" | tee -a $VALIDATION_LOG
-          echo "$CHANGED_FILES" | tee -a $VALIDATION_LOG
-          echo "" | tee -a $VALIDATION_LOG
+          # Create validation logs directory
+          mkdir -p validation_logs
+          VALIDATION_LOG="validation_logs/validation_results.txt"
+          ERROR_SUMMARY="validation_logs/error_summary.txt"
+
+          echo "Validation results:" > $VALIDATION_LOG
+          echo "====================" >> $VALIDATION_LOG
+          echo "" >> $VALIDATION_LOG
+
+          # Initialize error summary
+          echo "# Validation Error Summary" > $ERROR_SUMMARY
+          echo "" >> $ERROR_SUMMARY
 
           FAIL_COUNT=0
 
@@ -74,7 +82,7 @@ jobs:
           for file in "${FILES[@]}"; do
             echo "===== Validating $file =====" | tee -a $VALIDATION_LOG
             
-            # Run the validator with all output directly visible
+            # Run the validator with all output directly visible and capture it
             VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
@@ -84,7 +92,7 @@ jobs:
             
             VALIDATION_EXIT_CODE=$?
             
-            # Always show the full validation output
+            # Always show the full validation output in the logs
             echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
             
             # Check if validation failed
@@ -92,21 +100,30 @@ jobs:
               FAIL_COUNT=$((FAIL_COUNT+1))
               
               # Add to error summary
-              echo "❌ File: $file" | tee -a $ERROR_SUMMARY
-              echo "\`\`\`" >> $ERROR_SUMMARY
+              echo "## ❌ File: $file" | tee -a $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
               
-              # Extract all error messages from the output
-              echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|Missing required|Invalid|YAML (parsing|schema) (error|validation)|validation error|failed validation" | while read -r line; do
-                # Create GitHub error annotation
+              # Extract specific error messages from the validator output
+              # Look for lines that start with "Error:" which contain the specific validation errors
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|YAML (parsing|schema) (error|validation)|Missing required|Invalid tags|validation failed" || echo "Unknown validation error")
+              
+              # Display the specific error details prominently
+              echo "VALIDATION ERRORS for $file:" >&2
+              echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY >&2
+              echo "" >&2
+              
+              # Create GitHub error annotations for each specific error
+              echo "$ERROR_DETAILS" | while read -r line; do
                 echo "::error file=$file::$line"
-                # Add to error summary
-                echo "$line" >> $ERROR_SUMMARY
               done
               
-              echo "\`\`\`" >> $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
               echo "" >> $ERROR_SUMMARY
             else
               echo "✅ File passed validation: $file" | tee -a $VALIDATION_LOG
+              echo "## ✅ File: $file" >> $ERROR_SUMMARY
+              echo "Passed all validation checks" >> $ERROR_SUMMARY
+              echo "" >> $ERROR_SUMMARY
             fi
             
             echo "-----------------------------------------" | tee -a $VALIDATION_LOG
@@ -127,7 +144,7 @@ jobs:
             # Create GitHub annotations for key errors
             echo "::error::Validation failed with $FAIL_COUNT error(s). See details above."
             
-            # Save the outputs but don't print the full log in the console
+            # Save the outputs
             echo "validation_passed=false" >> $GITHUB_OUTPUT
             echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
             echo "error_summary<<EOF" >> $GITHUB_OUTPUT
