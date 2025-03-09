@@ -57,19 +57,20 @@ jobs:
 
           for file in $CHANGED_FILES; do
             echo "Validating $file..." | tee -a $VALIDATION_LOG
-            echo "--------------------" | tee -a $VALIDATION_LOG
             
-            # Run the validator on the file and capture output
-            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
+            # Run the validator with verbose flag and tee both stdout and stderr directly to the log
+            # The -v flag ensures we see the command being run
+            set -v 
+            python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
               --verbose \
-              2>&1)
+              2>&1 | tee -a $VALIDATION_LOG
             
-            VALIDATION_EXIT_CODE=$?
-            echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
-              
+            VALIDATION_EXIT_CODE=${PIPESTATUS[0]}
+            set +v
+            
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
@@ -77,26 +78,28 @@ jobs:
               # Add error details to summary for easy reference
               echo "❌ File: $file" | tee -a $ERROR_SUMMARY
               
-              # Extract and format error messages for better visibility
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error|Invalid|failed|missing|required" | sed 's/^/  /')
+              # Extract and format error messages - improved pattern matching for better output
+              ERROR_DETAILS=$(grep -A 10 "Validation Errors:" $VALIDATION_LOG | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | tail -10 | sed 's/^/  /')
               
               if [ -n "$ERROR_DETAILS" ]; then
                 echo "  Error details:" | tee -a $ERROR_SUMMARY
                 echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY
               else
-                echo "  Unknown validation error. See logs for details." | tee -a $ERROR_SUMMARY
+                # If we couldn't find structured error details, show the last few lines of output
+                echo "  Error details:" | tee -a $ERROR_SUMMARY
+                tail -5 $VALIDATION_LOG | sed 's/^/  /' | tee -a $ERROR_SUMMARY
               fi
               
               # Add separator for readability
               echo "" | tee -a $ERROR_SUMMARY
               
-              # Add error annotation for GitHub Actions UI
-              echo "::error file=$file::Validation failed: $(echo "$ERROR_DETAILS" | head -n 1)"
+              # Add error annotation for GitHub Actions UI with more detail
+              echo "::error file=$file::Validation failed: See validation log for details"
             else
               echo "✅ File passed validation: $file" | tee -a $ERROR_SUMMARY
             fi
             
-            echo "" | tee -a $VALIDATION_LOG
+            echo "-----------------------------------------" | tee -a $VALIDATION_LOG
             echo "" | tee -a $VALIDATION_LOG
           done
 
@@ -110,6 +113,12 @@ jobs:
             cat $ERROR_SUMMARY
             echo ""
             echo "See validation logs for complete details"
+            
+            # Print the entire log for debug purposes
+            echo "Full validation log:"
+            echo "============================================="
+            cat $VALIDATION_LOG
+            echo "============================================="
             
             echo "validation_passed=false" >> $GITHUB_OUTPUT
             echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT

@@ -51,20 +51,35 @@ class AgentValidator:
                 data = yaml.safe_load(f)
 
             if not isinstance(data, dict):
-                self.log_error(filepath, "YAML file must contain a dictionary")
+                error_msg = "YAML file must contain a dictionary"
+                self.log_error(filepath, error_msg)
                 return None, False
 
             try:
                 # Validate against schema
                 yamale.validate(self.yaml_schema, [(data, filepath)])
 
+                # Check for required fields
+                required_fields = ['name', 'emoji', 'description', 'system_message',
+                                   'label_color', 'text_color', 'is_default']
+                missing_fields = [
+                    field for field in required_fields if field not in data]
+                if missing_fields:
+                    error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                    self.log_error(filepath, error_msg)
+                    return None, False
+
                 # Validate tags
                 if 'tags' in data:
-                    if not self.tag_manager.validate_tags(data['tags']):
+                    if not isinstance(data['tags'], list):
+                        error_msg = "'tags' field must be a list"
+                        self.log_error(filepath, error_msg)
+                        return None, False
+                    elif not self.tag_manager.validate_tags(data['tags']):
                         invalid_tags = [t for t in data['tags']
                                         if t not in self.tag_manager.get_valid_tags()]
-                        self.log_error(
-                            filepath, f"Invalid tags: {', '.join(invalid_tags)}")
+                        error_msg = f"Invalid tags: {', '.join(invalid_tags)}"
+                        self.log_error(filepath, error_msg)
                         return None, False
 
                 # Suggest tags if none provided
@@ -80,18 +95,21 @@ class AgentValidator:
                 return data, True
 
             except ValueError as e:
-                self.log_error(
-                    filepath, f"YAML schema validation error: {str(e)}")
+                error_msg = f"YAML schema validation error: {str(e)}"
+                self.log_error(filepath, error_msg)
                 return None, False
 
         except yaml.YAMLError as e:
-            self.log_error(filepath, f"YAML parsing error: {str(e)}")
+            error_msg = f"YAML parsing error: {str(e)}"
+            self.log_error(filepath, error_msg)
             return None, False
         except FileNotFoundError:
-            self.log_error(filepath, "File not found")
+            error_msg = "File not found"
+            self.log_error(filepath, error_msg)
             return None, False
         except Exception as e:
-            self.log_error(filepath, f"Unexpected error: {str(e)}")
+            error_msg = f"Unexpected error: {str(e)}"
+            self.log_error(filepath, error_msg)
             return None, False
 
     def validate_directory(self, directory: str) -> Tuple[List[Dict], List[str], int]:
@@ -170,20 +188,25 @@ def main():
                 print(f"✓ {args.file} is valid")
                 sys.exit(0)
             else:
-                if args.output_format == "github-actions":
-                    print(f"::error file={args.file}::Validation failed")
-                else:
-                    print(f"✗ {args.file} failed validation")
+                print(f"\n❌ VALIDATION FAILED: {args.file}")
+                print("==================================================")
 
-                # If verbose mode is enabled, provide detailed error information
-                if args.verbose:
-                    print("\nValidation Errors:")
-                    # Check for known error types
+                # Always provide detailed error information
+                print("\nValidation Errors:")
+
+                # Check error log for this file
+                error_found = False
+                try:
                     with open(args.error_log, 'r') as error_log:
                         for line in error_log:
                             if args.file in line:
                                 print(f"  {line.strip()}")
+                                error_found = True
+                except:
+                    pass
 
+                # Additional checks in verbose mode
+                if args.verbose or not error_found:
                     # Check for missing required fields
                     try:
                         with open(args.file, 'r') as f:
@@ -214,6 +237,7 @@ def main():
                     except Exception as e:
                         print(f"  Error analyzing file: {str(e)}")
 
+                print("\n==================================================")
                 sys.exit(1)
 
         elif args.directory:
