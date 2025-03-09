@@ -1,0 +1,251 @@
+name: Auto-Revert Invalid Agent Files
+
+on:
+  workflow_run:
+    workflows: ["Update Agent Index"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  auto-revert:
+    name: Auto-Revert Invalid Agent Files
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download workflow logs
+        id: download-logs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+
+            // Create logs directory
+            fs.mkdirSync('logs', { recursive: true });
+
+            try {
+              // Get the workflow logs
+              const logs = await github.rest.actions.downloadWorkflowRunLogs({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.payload.workflow_run.id
+              });
+              
+              // Write logs to file
+              fs.writeFileSync('logs/workflow.zip', Buffer.from(logs.data));
+              console.log('Downloaded workflow logs');
+              
+              // Try to unzip and extract error information
+              const { execSync } = require('child_process');
+              execSync('mkdir -p logs/extracted && unzip -o logs/workflow.zip -d logs/extracted');
+              
+              // Extract validation errors from logs if possible
+              let errorSummary = '';
+              try {
+                const allLogs = fs.readdirSync('logs/extracted');
+                for (const logFile of allLogs) {
+                  const content = fs.readFileSync(`logs/extracted/${logFile}`, 'utf8');
+                  // Look for validation error sections
+                  if (content.includes('VALIDATION FAILED') || content.includes('Error:')) {
+                    errorSummary = content.match(/VALIDATION ERRORS:[\s\S]+?(?=\n\n|\n===|$)/g) || '';
+                    if (errorSummary) break;
+                  }
+                }
+              } catch (e) {
+                console.log('Error parsing logs:', e);
+              }
+              
+              core.setOutput('error_summary', errorSummary || 'No specific error details found');
+              return true;
+            } catch (e) {
+              console.log('Error downloading logs:', e);
+              return false;
+            }
+
+      - name: Check if validation failed
+        id: check-validation
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const workflowRun = context.payload.workflow_run;
+
+            // Get workflow jobs
+            const jobs = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: workflowRun.id
+            });
+
+            // Check for validation failure
+            let validationFailed = false;
+            let invalidFiles = [];
+
+            for (const job of jobs.data.jobs) {
+              // Look for steps with names containing "Validate"
+              const validationStep = job.steps.find(step => 
+                step.name.includes('Validate') && step.conclusion === 'failure'
+              );
+              
+              if (validationStep) {
+                validationFailed = true;
+                break;
+              }
+            }
+
+            // Get the artifacts to find specific invalid files
+            try {
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: workflowRun.id
+              });
+              
+              // Look for validation results artifact
+              const validationArtifact = artifacts.data.artifacts.find(
+                artifact => artifact.name === "validation-results"
+              );
+              
+              if (validationArtifact) {
+                console.log('Found validation results artifact');
+                core.setOutput('has_artifacts', 'true');
+              } else {
+                console.log('No validation results artifact found');
+                core.setOutput('has_artifacts', 'false');
+              }
+            } catch (e) {
+              console.log('Error checking artifacts:', e);
+            }
+
+            core.setOutput('validation_failed', validationFailed);
+            return validationFailed;
+
+      - name: Revert invalid commit
+        if: steps.check-validation.outputs.validation_failed == 'true'
+        run: |
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Revert Bot"
+
+          # Get the failing commit hash
+          COMMIT_HASH=$(git rev-parse HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          COMMIT_SHORT=$(git rev-parse --short HEAD)
+
+          # Get changed files
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep '\.yaml$' || echo "")
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Changed YAML files in this commit:"
+            echo "$CHANGED_FILES"
+            echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+            echo "$CHANGED_FILES" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+          # Store commit info in env vars for later use
+          echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
+          echo "COMMIT_SHORT=$COMMIT_SHORT" >> $GITHUB_ENV
+          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
+
+          # Revert the commit
+          git revert -n $COMMIT_HASH
+          git commit -m "♻️ Auto-revert: Validation failed for agent files" \
+            -m "Reverting commit $COMMIT_SHORT which contained invalid agent files." \
+            -m "See the workflow run for detailed validation errors: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          # Push the revert
+          git push
+
+      - name: Create issue about the revert
+        if: steps.check-validation.outputs.validation_failed == 'true'
+        run: |
+          # Create issue template
+          cat > issue_body.md << 'EOL'
+          ## Invalid Agent Files Automatically Reverted
+
+          A direct commit to the main branch contained invalid agent files and has been automatically reverted to maintain repository integrity.
+
+          ### Details
+          - **Original Commit**: $COMMIT_SHORT
+          - **Commit Message**: $COMMIT_MSG
+          - **Validation Workflow Run**: $WORKFLOW_RUN_URL
+          - **Revert Workflow Run**: $REVERT_WORKFLOW_URL
+
+          ### Changed Files
+          ```
+          $CHANGED_FILES
+          ```
+
+          ### Validation Errors
+          ```
+          $ERROR_SUMMARY
+          ```
+
+          ### Next Steps
+          1. Create a new branch from the current main
+          2. Add your changes with the validation issues fixed
+          3. Open a pull request for review
+
+          ### Need Help?
+          - Review the [agent schema](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/schemas/agent.schema.yaml) for required fields
+          - Check [existing agents](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/main/agents) for examples
+          - See the [contributing guide](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/CONTRIBUTING.md) for more information
+
+          This automatic revert helps maintain the quality of our agent repository.
+          EOL
+
+          # Replace variables in the template
+          ERROR_SUMMARY="$(cat logs/extracted/*validation* 2>/dev/null | grep -A 10 "VALIDATION ERRORS" || echo "No specific error details found")"
+          WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
+          REVERT_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          sed -i "s|\$COMMIT_SHORT|${COMMIT_SHORT}|g" issue_body.md
+          sed -i "s|\$COMMIT_MSG|${COMMIT_MSG}|g" issue_body.md
+          sed -i "s|\$WORKFLOW_RUN_URL|${WORKFLOW_RUN_URL}|g" issue_body.md
+          sed -i "s|\$REVERT_WORKFLOW_URL|${REVERT_WORKFLOW_URL}|g" issue_body.md
+          sed -i "s|\$CHANGED_FILES|${CHANGED_FILES}|g" issue_body.md
+
+          # Add error summary carefully to avoid sed issues with special characters
+          awk -v er="$ERROR_SUMMARY" '{gsub(/\$ERROR_SUMMARY/, er)}1' issue_body.md > issue_body_with_errors.md
+          mv issue_body_with_errors.md issue_body.md
+
+      - name: Submit issue
+        if: steps.check-validation.outputs.validation_failed == 'true'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+
+            // Read issue body from file
+            const issueBody = fs.readFileSync('issue_body.md', 'utf8');
+            const shortCommit = process.env.COMMIT_SHORT || 'unknown';
+
+            const issue = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `♻️ Invalid agent files automatically reverted (commit ${shortCommit})`,
+              body: issueBody,
+              labels: ['auto-revert', 'validation-failed']
+            };
+
+            try {
+              const result = await github.rest.issues.create(issue);
+              console.log(`Issue created: ${result.data.html_url}`);
+            } catch (e) {
+              console.log('Error creating issue:', e);
+            }

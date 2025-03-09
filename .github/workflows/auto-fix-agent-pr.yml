@@ -1,0 +1,176 @@
+name: Auto-Create Fix PR for Invalid Agent Files
+
+on:
+  workflow_run:
+    workflows: ["Update Agent Index"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  create-fix-pr:
+    name: Create PR with Agent File Fixes
+    runs-on: ubuntu-latest
+    # Only run if the update index workflow failed
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema yamale
+
+      - name: Download workflow artifacts
+        id: download-artifact
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fs = require('fs');
+
+            // Create artifacts directory
+            fs.mkdirSync('artifacts', { recursive: true });
+
+            // Get the artifacts from the failed workflow
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id
+            });
+
+            // Find validation results artifact
+            const validationArtifact = artifacts.data.artifacts.find(
+              artifact => artifact.name === "validation-results"
+            );
+
+            if (!validationArtifact) {
+              console.log('No validation results artifact found');
+              return false;
+            }
+
+            // Download the artifact
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: validationArtifact.id,
+              archive_format: 'zip'
+            });
+
+            // Write the zip to disk
+            fs.writeFileSync('artifacts/validation.zip', Buffer.from(download.data));
+            console.log('Downloaded validation artifact');
+
+            // Extract validation info
+            const { execSync } = require('child_process');
+            execSync('unzip -o artifacts/validation.zip -d artifacts/');
+
+            return true;
+
+      - name: Identify and fix invalid files
+        id: fix-files
+        run: |
+          # Create a new branch for fixes
+          BRANCH_NAME="fix-invalid-agents-$(date +%s)"
+          git checkout -b $BRANCH_NAME
+
+          # Get list of invalid files from error summary
+          INVALID_FILES=$(grep -o "agents/[^ ]*\.yaml" artifacts/error_summary.txt | sort | uniq || echo "")
+
+          if [ -z "$INVALID_FILES" ]; then
+            echo "No invalid files identified from artifacts"
+            exit 0
+          fi
+
+          echo "Invalid files identified: $INVALID_FILES"
+          echo "invalid_files=$INVALID_FILES" >> $GITHUB_OUTPUT
+
+          FIXED_COUNT=0
+
+          # For each invalid file
+          for file in $INVALID_FILES; do
+            echo "Attempting to fix $file"
+            
+            # Get error details for this file
+            ERROR_DETAILS=$(grep -A 10 "$file" artifacts/error_summary.txt | grep -E "Error:|Missing|Invalid" || echo "")
+            
+            # Check if file exists
+            if [ ! -f "$file" ]; then
+              echo "File $file not found, skipping"
+              continue
+            fi
+            
+            # Common fix: Add missing tags if that's the error
+            if echo "$ERROR_DETAILS" | grep -q "tags"; then
+              # Add a default tag if tags are missing
+              if ! grep -q "tags:" "$file"; then
+                echo -e "\ntags:\n  - miscellaneous" >> "$file"
+                echo "Added missing tags field to $file"
+                FIXED_COUNT=$((FIXED_COUNT+1))
+              fi
+            fi
+            
+            # More fixes could be added here for other common errors
+          done
+
+          # Check if we made any changes
+          if [ $FIXED_COUNT -gt 0 ]; then
+            echo "fixed_count=$FIXED_COUNT" >> $GITHUB_OUTPUT
+            echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+            
+            # Configure git
+            git config --local user.email "action@github.com"
+            git config --local user.name "Fix Bot"
+            
+            # Commit the changes
+            git add .
+            git commit -m "🛠️ Auto-fix: Added missing fields to invalid agent files"
+            
+            # Push the branch
+            git push origin $BRANCH_NAME
+          else
+            echo "No automatic fixes were possible"
+          fi
+
+      - name: Create Pull Request
+        if: steps.fix-files.outputs.fixed_count && steps.fix-files.outputs.fixed_count != '0'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const fixedCount = process.env.FIXED_COUNT;
+            const branchName = process.env.BRANCH_NAME;
+            const invalidFiles = process.env.INVALID_FILES.split(' ').join('\n- ');
+
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🛠️ Auto-fix: Repair invalid agent files`,
+              body: `This PR was automatically created to fix issues with invalid agent files that were directly pushed to the main branch.
+
+              ## Files with attempted fixes:
+              - ${invalidFiles}
+              
+              ## Fixes Applied
+              - Added missing required fields to ${fixedCount} files
+              
+              ## Important Note
+              Please review these changes carefully. The automated fixes attempt to resolve basic issues but may not address all problems completely.
+              
+              If there are still validation failures after merging this PR, additional manual fixes will be needed.
+              
+              Related workflow run: ${context.payload.workflow_run.html_url}`,
+              head: branchName,
+              base: 'main'
+            });
+
+            console.log(`PR created: ${pr.data.html_url}`);
