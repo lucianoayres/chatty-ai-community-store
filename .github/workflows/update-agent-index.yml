@@ -139,6 +139,7 @@ jobs:
             echo "============================================="
             echo ""
             # Display the error summary in the console
+            echo "# Validation Error Summary"
             cat $ERROR_SUMMARY
             
             # Create GitHub annotations for key errors
@@ -175,6 +176,10 @@ jobs:
       - name: Validation summary
         if: steps.find-files.outputs.has_changes == 'true' && always()
         run: |
+          # Setup validation environment
+          export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
+
+          echo "=== VALIDATION SUMMARY ==="
           if [[ "${{ steps.validation.outputs.validation_passed }}" == "true" ]]; then
             echo "✅ Validation PASSED - All agent files are valid"
           else
@@ -186,6 +191,34 @@ jobs:
               echo "=== VALIDATION ERROR DETAILS ==="
               cat validation_logs/error_summary.txt
               echo "================================"
+            else
+              # Try to extract error details directly from the validation output
+              echo ""
+              echo "# Validation Error Summary"
+              
+              # Get the list of files that were validated
+              IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
+              
+              for file in "${FILES[@]}"; do
+                # Run the validator again to get the error details
+                VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
+                  --yaml-schema schemas/agent.schema.yaml \
+                  --file "$file" \
+                  --tag-definitions tags.json \
+                  --verbose \
+                  2>&1)
+                
+                VALIDATION_EXIT_CODE=$?
+                
+                if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
+                  echo ""
+                  echo "## ❌ File: $file"
+                  echo '```'
+                  # Extract specific error messages
+                  echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|YAML (parsing|schema) (error|validation)|Missing required|Invalid tags|validation failed" || echo "Unknown validation error"
+                  echo '```'
+                fi
+              done
             fi
           fi
 
