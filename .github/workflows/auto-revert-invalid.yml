@@ -17,7 +17,10 @@ jobs:
   quarantine-invalid:
     name: Move Invalid Agent Files to Invalid Directory
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    outputs:
+      should_quarantine: ${{ steps.verify-changes.outputs.should_quarantine }}
+      validation_failed: ${{ steps.check-validation.outputs.validation_failed }}
+      files_quarantined: ${{ steps.quarantine-files.outputs.files_moved }}
 
     steps:
       - name: Checkout code
@@ -39,13 +42,17 @@ jobs:
           CHANGED_AGENT_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_SHA | grep "^agents/" | grep -E "\.(yaml|yml)$" | grep -v "^agents/invalid/" || echo "")
 
           if [ -z "$CHANGED_AGENT_FILES" ]; then
-            echo "No agent YAML files were changed in this commit. Skipping quarantine."
+            echo "::notice::No agent YAML files were changed in this commit. Skipping quarantine."
             echo "should_quarantine=false" >> $GITHUB_OUTPUT
           else
             echo "Found changed agent files:"
             echo "$CHANGED_AGENT_FILES"
             echo "should_quarantine=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Skip notice for download logs
+        if: steps.verify-changes.outputs.should_quarantine != 'true'
+        run: echo "::notice::Skipping download logs - no agent file changes detected"
 
       - name: Download workflow logs
         id: download-logs
@@ -97,6 +104,10 @@ jobs:
               console.log('Error downloading logs:', e);
               return false;
             }
+
+      - name: Skip notice for validation check
+        if: steps.verify-changes.outputs.should_quarantine != 'true'
+        run: echo "::notice::Skipping validation check - no agent file changes detected"
 
       - name: Check if validation failed
         id: check-validation
@@ -157,7 +168,17 @@ jobs:
             core.setOutput('validation_failed', validationFailed);
             return validationFailed;
 
+      - name: Skip notice for directory creation
+        if: steps.verify-changes.outputs.should_quarantine != 'true' || steps.check-validation.outputs.validation_failed != 'true'
+        run: |
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "::notice::Skipping invalid directory creation - no agent file changes detected"
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "::notice::Skipping invalid directory creation - no validation failures detected"
+          fi
+
       - name: Create invalid directory
+        id: create-invalid-dir
         if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Create invalid directory if it doesn't exist
@@ -186,11 +207,23 @@ jobs:
             echo "" >> agents/invalid/README.md
             echo "Files here follow the pattern: \`original_filename_TIMESTAMP.yaml\`" >> agents/invalid/README.md
             echo "The timestamp helps avoid name collisions if the same file is quarantined multiple times." >> agents/invalid/README.md
+            echo "Created invalid directory and README.md" >> $GITHUB_STEP_SUMMARY
           else
             echo "agents/invalid directory already exists"
           fi
+          echo "directory_created=true" >> $GITHUB_OUTPUT
+
+      - name: Skip notice for quarantine
+        if: steps.verify-changes.outputs.should_quarantine != 'true' || steps.check-validation.outputs.validation_failed != 'true'
+        run: |
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "::notice::Skipping quarantine - no agent file changes detected"
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "::notice::Skipping quarantine - no validation failures detected"
+          fi
 
       - name: Quarantine invalid files
+        id: quarantine-files
         if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Configure git
@@ -212,6 +245,7 @@ jobs:
             echo "EOF" >> $GITHUB_ENV
           else
             echo "No agent files found to quarantine. This is unexpected."
+            echo "files_moved=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -254,6 +288,7 @@ jobs:
           # Only proceed if we actually moved files
           if [ -z "$MOVED_FILES" ]; then
             echo "No files were moved to quarantine. Exiting."
+            echo "files_moved=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -273,9 +308,23 @@ jobs:
 
           # Push the changes
           git push
+          echo "files_moved=true" >> $GITHUB_OUTPUT
+          echo "Quarantined files successfully" >> $GITHUB_STEP_SUMMARY
+
+      - name: Skip notice for issue creation
+        if: steps.verify-changes.outputs.should_quarantine != 'true' || steps.check-validation.outputs.validation_failed != 'true' || steps.quarantine-files.outputs.files_moved != 'true'
+        run: |
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "::notice::Skipping issue creation - no agent file changes detected"
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "::notice::Skipping issue creation - no validation failures detected"
+          elif [ "${{ steps.quarantine-files.outputs.files_moved }}" != "true" ]; then
+            echo "::notice::Skipping issue creation - no files were actually quarantined"
+          fi
 
       - name: Create issue about quarantined files
-        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+        id: create-issue
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true' && steps.quarantine-files.outputs.files_moved == 'true'
         run: |
           # Create issue template
           cat > issue_body.md << 'EOL'
@@ -353,9 +402,22 @@ jobs:
           # Add error summary carefully to avoid sed issues with special characters
           awk -v er="$ERROR_SUMMARY" '{gsub(/\$ERROR_SUMMARY/, er)}1' issue_body.md > issue_body_with_errors.md
           mv issue_body_with_errors.md issue_body.md
+          echo "issue_prepared=true" >> $GITHUB_OUTPUT
+
+      - name: Skip notice for issue submission
+        if: steps.verify-changes.outputs.should_quarantine != 'true' || steps.check-validation.outputs.validation_failed != 'true' || steps.quarantine-files.outputs.files_moved != 'true'
+        run: |
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "::notice::Skipping issue submission - no agent file changes detected"
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "::notice::Skipping issue submission - no validation failures detected" 
+          elif [ "${{ steps.quarantine-files.outputs.files_moved }}" != "true" ]; then
+            echo "::notice::Skipping issue submission - no files were actually quarantined"
+          fi
 
       - name: Submit issue
-        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+        id: submit-issue
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true' && steps.quarantine-files.outputs.files_moved == 'true' && steps.create-issue.outputs.issue_prepared == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -377,6 +439,51 @@ jobs:
             try {
               const result = await github.rest.issues.create(issue);
               console.log(`Issue created: ${result.data.html_url}`);
+              // Add to step summary
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Issue created: ${result.data.html_url}\n`);
+              return true;
             } catch (e) {
               console.log('Error creating issue:', e);
+              return false;
             }
+
+      - name: Workflow Summary
+        run: |
+          echo "## Quarantine Workflow Results" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "✅ No agent file changes detected - nothing to quarantine" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "✅ All agent files passed validation - nothing to quarantine" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.quarantine-files.outputs.files_moved }}" != "true" ]; then
+            echo "⚠️ No files were moved to quarantine despite validation failure" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📦 Invalid agent files were successfully quarantined" >> $GITHUB_STEP_SUMMARY
+            echo "📝 An issue was created to track the quarantined files" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Early exit check
+        id: early-exit
+        run: |
+          # Check if we were triggered by a failed workflow
+          if [ "${{ github.event.workflow_run.conclusion }}" != "failure" ]; then
+            echo "::notice::Skipping quarantine - triggering workflow completed successfully"
+            echo "Nothing to quarantine - workflow run was successful" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+      - name: Final status check
+        if: always()
+        run: |
+          # Explicitly set success status if we intentionally skipped everything
+          if [ "${{ steps.verify-changes.outputs.should_quarantine }}" != "true" ]; then
+            echo "✅ No agent file changes detected - workflow succeeded with nothing to quarantine" 
+            exit 0
+          elif [ "${{ steps.check-validation.outputs.validation_failed }}" != "true" ]; then
+            echo "✅ All agent files passed validation - workflow succeeded with nothing to quarantine"
+            exit 0
+          elif [ "${{ steps.quarantine-files.outputs.files_moved || 'false' }}" != "true" ]; then
+            # This might be an unexpected case we should look into
+            echo "⚠️ Warning: Validation failed but no files were quarantined"
+            exit 0
+          fi
