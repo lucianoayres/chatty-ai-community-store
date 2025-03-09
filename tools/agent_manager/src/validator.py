@@ -48,16 +48,42 @@ class AgentValidator:
         """Validate a single YAML file against schema."""
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
-                data = yaml.safe_load(f)
+                file_content = f.read()
+
+            try:
+                data = yaml.safe_load(file_content)
+            except yaml.YAMLError as e:
+                error_msg = f"YAML parsing error: {str(e)}"
+                self.log_error(filepath, error_msg)
+                print(f"Error: {error_msg}")
+                return None, False
 
             if not isinstance(data, dict):
                 error_msg = "YAML file must contain a dictionary"
                 self.log_error(filepath, error_msg)
+                print(f"Error: {error_msg}")
                 return None, False
 
             try:
                 # Validate against schema
-                yamale.validate(self.yaml_schema, [(data, filepath)])
+                try:
+                    yamale.validate(self.yaml_schema, [(data, filepath)])
+                except ValueError as e:
+                    error_msg = f"YAML schema validation error: {str(e)}"
+                    self.log_error(filepath, error_msg)
+                    print(f"Error: {error_msg}")
+
+                    # Check for specific common schema validation issues
+                    required_fields = ['name', 'emoji', 'description', 'system_message',
+                                       'label_color', 'text_color', 'is_default', 'tags']
+                    missing_fields = [
+                        field for field in required_fields if field not in data]
+                    if missing_fields:
+                        missing_error = f"Missing required fields: {', '.join(missing_fields)}"
+                        self.log_error(filepath, missing_error)
+                        print(f"Error: {missing_error}")
+
+                    return None, False
 
                 # Check for required fields
                 required_fields = ['name', 'emoji', 'description', 'system_message',
@@ -67,6 +93,7 @@ class AgentValidator:
                 if missing_fields:
                     error_msg = f"Missing required fields: {', '.join(missing_fields)}"
                     self.log_error(filepath, error_msg)
+                    print(f"Error: {error_msg}")
                     return None, False
 
                 # Validate tags
@@ -74,15 +101,22 @@ class AgentValidator:
                     if not isinstance(data['tags'], list):
                         error_msg = "'tags' field must be a list"
                         self.log_error(filepath, error_msg)
+                        print(f"Error: {error_msg}")
                         return None, False
                     elif not self.tag_manager.validate_tags(data['tags']):
                         invalid_tags = [t for t in data['tags']
                                         if t not in self.tag_manager.get_valid_tags()]
                         error_msg = f"Invalid tags: {', '.join(invalid_tags)}"
                         self.log_error(filepath, error_msg)
+                        print(f"Error: {error_msg}")
                         return None, False
+                else:
+                    error_msg = "Missing required field: tags"
+                    self.log_error(filepath, error_msg)
+                    print(f"Error: {error_msg}")
+                    return None, False
 
-                # Suggest tags if none provided
+                # Suggest tags if none provided but has name (this should not happen anymore)
                 if 'tags' not in data and 'name' in data:
                     suggested_tags = self.tag_manager.get_tags_by_example(
                         data['name'])
@@ -97,19 +131,23 @@ class AgentValidator:
             except ValueError as e:
                 error_msg = f"YAML schema validation error: {str(e)}"
                 self.log_error(filepath, error_msg)
+                print(f"Error: {error_msg}")
                 return None, False
 
         except yaml.YAMLError as e:
             error_msg = f"YAML parsing error: {str(e)}"
             self.log_error(filepath, error_msg)
+            print(f"Error: {error_msg}")
             return None, False
         except FileNotFoundError:
             error_msg = "File not found"
             self.log_error(filepath, error_msg)
+            print(f"Error: {error_msg}")
             return None, False
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
             self.log_error(filepath, error_msg)
+            print(f"Error: {error_msg}")
             return None, False
 
     def validate_directory(self, directory: str) -> Tuple[List[Dict], List[str], int]:

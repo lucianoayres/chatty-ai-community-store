@@ -32,8 +32,7 @@ jobs:
         id: validation
         continue-on-error: false
         run: |
-          echo "::group::Validating changed agent files"
-          # Get list of changed files
+          # Get list of changed files (removed grouping to ensure errors are visible)
           CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep "^agents/.*\.yaml$" || echo "")
           echo "Changed agent files:"
           echo "$CHANGED_FILES"
@@ -59,19 +58,26 @@ jobs:
           echo "" > $ERROR_SUMMARY
 
           for file in $CHANGED_FILES; do
-            echo "Validating $file..."
+            echo "===== Validating $file ====="
             
-            # Run the validator with verbose flag and capture output instead of just redirecting
+            # Run the validator with all output directly visible
+            python tools/agent_manager/src/validator.py \
+              --yaml-schema schemas/agent.schema.yaml \
+              --file "$file" \
+              --tag-definitions tags.json \
+              --verbose
+            
+            VALIDATION_EXIT_CODE=$?
+            
+            # Capture the same command output to save in logs
             VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
               --verbose \
               2>&1)
-            
-            VALIDATION_EXIT_CODE=$?
-            
-            # Save full output to log file
+              
+            # Save to log file
             echo "Validating $file..." >> $VALIDATION_LOG
             echo "-----------------------------------------" >> $VALIDATION_LOG
             echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
@@ -85,42 +91,43 @@ jobs:
               # Add error details to summary for easy reference
               echo "❌ File: $file" | tee -a $ERROR_SUMMARY
               
-              # Extract error details for display
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -A 10 "Validation Errors:" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -5 | sed 's/^/  /')
+              # Extract errors and display them directly with annotations
+              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -10)
               
               if [ -n "$ERROR_DETAILS" ]; then
-                # Print the essential error details to the console AND log them
-                echo ""
-                echo "  Validation errors:"
-                echo "$ERROR_DETAILS"
-                echo ""
+                # Force display error to stderr
+                echo "VALIDATION ERRORS:" >&2
+                echo "$ERROR_DETAILS" >&2
+                echo "" >&2
+                
+                # Add each line as a GitHub error annotation
+                echo "$ERROR_DETAILS" | while read -r line; do
+                  echo "::error file=$file::$line"
+                done
                 
                 # Add to summary
                 echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
               else
-                # If we couldn't find error details in the structured output, take the last few lines
-                # This can happen with syntax errors or other unexpected issues
-                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5 | sed 's/^/  /')
+                # If no specific errors found, display the last few lines
+                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5)
                 
-                echo ""
-                echo "  Validation errors:"
-                echo "$ERROR_DETAILS"
-                echo ""
+                # Force display error to stderr
+                echo "VALIDATION ERRORS:" >&2
+                echo "$ERROR_DETAILS" >&2
+                echo "" >&2
                 
                 # Add to summary
                 echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" >> $ERROR_SUMMARY
+                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
               fi
               
               echo "" >> $ERROR_SUMMARY
-              
-              # Add error annotation for GitHub Actions UI with more detail
-              FIRST_ERROR=$(echo "$ERROR_DETAILS" | head -n 1 | sed 's/^ *//')
-              echo "::error file=$file::Validation failed: $FIRST_ERROR"
             else
               echo "✅ File passed validation: $file"
             fi
+            
+            echo ""
           done
 
           # Determine overall result
@@ -128,7 +135,7 @@ jobs:
             # Print error summary to make it clearly visible in workflow logs
             echo ""
             echo "============================================="
-            echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues"
+            echo "❌ VALIDATION FAILED: $FAIL_COUNT files have issues" >&2
             echo "============================================="
             echo ""
             # Display the error summary in the console
@@ -152,7 +159,6 @@ jobs:
             echo "validation_passed=true" >> $GITHUB_OUTPUT
             echo "✅ All agent files passed validation!"
           fi
-          echo "::endgroup::"
 
       - name: Upload validation results
         if: steps.validation.outputs.validation_passed == 'false' || failure()
