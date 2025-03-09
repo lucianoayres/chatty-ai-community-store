@@ -370,8 +370,13 @@ jobs:
           This automated quarantine helps maintain the quality of our agent repository while preserving your work.
           EOL
 
-          # Replace variables in the template
-          # Better error extraction from logs using multiple patterns
+          # Replace variables in the template using awk instead of sed
+          # This is safer for handling special characters in variables
+
+          WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
+          QUARANTINE_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          # Extract error summary from logs
           ERROR_SUMMARY=""
           VALIDATION_PATTERNS=(
             'VALIDATION ERRORS'
@@ -400,18 +405,23 @@ jobs:
           # Trim to reasonable size if needed
           ERROR_SUMMARY=$(echo "$ERROR_SUMMARY" | head -n 30)
 
-          WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
-          QUARANTINE_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          # Use awk to safely replace all variables
+          awk -v cs="$COMMIT_SHORT" \
+              -v cm="$COMMIT_MSG" \
+              -v wr="$WORKFLOW_RUN_URL" \
+              -v qw="$QUARANTINE_WORKFLOW_URL" \
+              -v mf="$MOVED_FILES" \
+              -v es="$ERROR_SUMMARY" \
+          '{
+            gsub(/\$COMMIT_SHORT/, cs);
+            gsub(/\$COMMIT_MSG/, cm);
+            gsub(/\$WORKFLOW_RUN_URL/, wr);
+            gsub(/\$QUARANTINE_WORKFLOW_URL/, qw);
+            gsub(/\$MOVED_FILES/, mf);
+            gsub(/\$ERROR_SUMMARY/, es);
+            print;
+          }' issue_body.md > issue_body_tmp.md && mv issue_body_tmp.md issue_body.md
 
-          sed -i "s|\$COMMIT_SHORT|${COMMIT_SHORT}|g" issue_body.md
-          sed -i "s|\$COMMIT_MSG|${COMMIT_MSG}|g" issue_body.md
-          sed -i "s|\$WORKFLOW_RUN_URL|${WORKFLOW_RUN_URL}|g" issue_body.md
-          sed -i "s|\$QUARANTINE_WORKFLOW_URL|${QUARANTINE_WORKFLOW_URL}|g" issue_body.md
-          sed -i "s|\$MOVED_FILES|${MOVED_FILES}|g" issue_body.md
-
-          # Add error summary carefully to avoid sed issues with special characters
-          awk -v er="$ERROR_SUMMARY" '{gsub(/\$ERROR_SUMMARY/, er)}1' issue_body.md > issue_body_with_errors.md
-          mv issue_body_with_errors.md issue_body.md
           echo "issue_prepared=true" >> $GITHUB_OUTPUT
 
       - name: Skip notice for issue submission

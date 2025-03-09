@@ -62,90 +62,55 @@ jobs:
           export PYTHONPATH="$PWD/tools/agent_manager/src:$PYTHONPATH"
 
           # Validate each changed file
-          mkdir -p validation_logs
-          VALIDATION_LOG="validation_logs/validation_results.txt"
-          ERROR_SUMMARY="validation_logs/error_summary.txt"
-          echo "Validation results:" > $VALIDATION_LOG
-          echo "====================" >> $VALIDATION_LOG
-          echo "" >> $VALIDATION_LOG
+          echo "Validating agent files:" | tee -a $VALIDATION_LOG
+          echo "$CHANGED_FILES" | tee -a $VALIDATION_LOG
+          echo "" | tee -a $VALIDATION_LOG
 
           FAIL_COUNT=0
-          echo "" > $ERROR_SUMMARY
 
           # Get the list of files to validate
           IFS=$'\n' read -d '' -ra FILES <<< "${{ steps.find-files.outputs.files }}"
 
           for file in "${FILES[@]}"; do
-            echo "===== Validating $file ====="
+            echo "===== Validating $file =====" | tee -a $VALIDATION_LOG
             
             # Run the validator with all output directly visible
-            python tools/agent_manager/src/validator.py \
-              --yaml-schema schemas/agent.schema.yaml \
-              --file "$file" \
-              --tag-definitions tags.json \
-              --verbose
-            
-            VALIDATION_EXIT_CODE=$?
-            
-            # Capture the same command output to save in logs
             VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py \
               --yaml-schema schemas/agent.schema.yaml \
               --file "$file" \
               --tag-definitions tags.json \
               --verbose \
               2>&1)
-              
-            # Save to log file
-            echo "Validating $file..." >> $VALIDATION_LOG
-            echo "-----------------------------------------" >> $VALIDATION_LOG
-            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
-            echo "-----------------------------------------" >> $VALIDATION_LOG
-            echo "" >> $VALIDATION_LOG
+            
+            VALIDATION_EXIT_CODE=$?
+            
+            # Always show the full validation output
+            echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
             
             # Check if validation failed
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
               FAIL_COUNT=$((FAIL_COUNT+1))
               
-              # Add error details to summary for easy reference
+              # Add to error summary
               echo "❌ File: $file" | tee -a $ERROR_SUMMARY
+              echo "\`\`\`" >> $ERROR_SUMMARY
               
-              # Extract errors and display them directly with annotations
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -E "Error:|Warning:|Missing|Invalid|failed|required" | head -10)
+              # Extract all error messages from the output
+              echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|Missing required|Invalid|YAML (parsing|schema) (error|validation)|validation error|failed validation" | while read -r line; do
+                # Create GitHub error annotation
+                echo "::error file=$file::$line"
+                # Add to error summary
+                echo "$line" >> $ERROR_SUMMARY
+              done
               
-              if [ -n "$ERROR_DETAILS" ]; then
-                # Force display error to stderr
-                echo "VALIDATION ERRORS:" >&2
-                echo "$ERROR_DETAILS" >&2
-                echo "" >&2
-                
-                # Add each line as a GitHub error annotation
-                echo "$ERROR_DETAILS" | while read -r line; do
-                  echo "::error file=$file::$line"
-                done
-                
-                # Add to summary
-                echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
-              else
-                # If no specific errors found, display the last few lines
-                ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | tail -5)
-                
-                # Force display error to stderr
-                echo "VALIDATION ERRORS:" >&2
-                echo "$ERROR_DETAILS" >&2
-                echo "" >&2
-                
-                # Add to summary
-                echo "  Error details:" >> $ERROR_SUMMARY
-                echo "$ERROR_DETAILS" | sed 's/^/  /' >> $ERROR_SUMMARY
-              fi
-              
+              echo "\`\`\`" >> $ERROR_SUMMARY
               echo "" >> $ERROR_SUMMARY
             else
-              echo "✅ File passed validation: $file"
+              echo "✅ File passed validation: $file" | tee -a $VALIDATION_LOG
             fi
             
-            echo ""
+            echo "-----------------------------------------" | tee -a $VALIDATION_LOG
+            echo "" | tee -a $VALIDATION_LOG
           done
 
           # Determine overall result
@@ -168,9 +133,6 @@ jobs:
             echo "error_summary<<EOF" >> $GITHUB_OUTPUT
             cat $ERROR_SUMMARY >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-            
-            echo ""
-            echo "Complete validation log saved as an artifact"
             
             exit 1
           else

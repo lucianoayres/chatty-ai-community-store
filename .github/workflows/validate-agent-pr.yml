@@ -108,8 +108,8 @@ jobs:
             
             VALIDATION_EXIT_CODE=$?
             
-            # Save complete output to log
-            echo "$VALIDATION_OUTPUT" >> $VALIDATION_LOG
+            # Always show the full validation output
+            echo "$VALIDATION_OUTPUT" | tee -a $VALIDATION_LOG
             
             # Process validation results
             if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
@@ -117,28 +117,24 @@ jobs:
               
               # Add to error summary
               echo "## ❌ $file" | tee -a $ERROR_SUMMARY
-              echo '```' | tee -a $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
               
-              # Extract and display ALL validation errors
-              ERROR_DETAILS=$(echo "$VALIDATION_OUTPUT" | grep -A 2 -B 1 -E "Error:|Warning:|Missing|Invalid|failed|required|validation error|schema validation")
+              # Extract all error messages from the output
+              echo "$VALIDATION_OUTPUT" | grep -E "^Error:|^Warning:|Missing required|Invalid|YAML (parsing|schema) (error|validation)|validation error|failed validation" | while read -r line; do
+                # Create GitHub error annotation
+                echo "::error file=$file::$line"
+                # Add to error summary
+                echo "$line" >> $ERROR_SUMMARY
+              done
               
-              if [ -n "$ERROR_DETAILS" ]; then
-                # Display full error details in both workflow and summary
-                echo "$ERROR_DETAILS" | tee -a $ERROR_SUMMARY >&2
-                
-                # Create GitHub annotations for each error
-                echo "$ERROR_DETAILS" | while read -r line; do
-                  if [[ $line =~ Error:|Warning:|Missing|Invalid|failed|required|validation ]]; then
-                    echo "::error file=$file::$line"
-                  fi
-                done
-              else
-                # If no specific errors found, show full output
-                echo "$VALIDATION_OUTPUT" | tee -a $ERROR_SUMMARY >&2
+              # If no specific errors found in grep, show the full output
+              if ! echo "$VALIDATION_OUTPUT" | grep -q -E "^Error:|^Warning:|Missing required|Invalid|YAML|validation"; then
+                echo "Full validation output:" >> $ERROR_SUMMARY
+                echo "$VALIDATION_OUTPUT" >> $ERROR_SUMMARY
               fi
               
-              echo '```' | tee -a $ERROR_SUMMARY
-              echo "" | tee -a $ERROR_SUMMARY
+              echo '```' >> $ERROR_SUMMARY
+              echo "" >> $ERROR_SUMMARY
             else
               echo "✅ File passed validation: $file" | tee -a $VALIDATION_LOG
               echo "## ✅ $file" >> $ERROR_SUMMARY
