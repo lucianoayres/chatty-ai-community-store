@@ -195,29 +195,7 @@ jobs:
           if [ ! -d "agents/invalid" ]; then
             echo "Creating agents/invalid directory for the first time"
             mkdir -p agents/invalid
-            
-            # Create a simple README without heredoc to avoid syntax issues
-            echo "# Invalid Agent Files" > agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "This directory contains agent files that failed validation but were preserved for reference." >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "## Why Files are Here" >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "Files in this directory were automatically moved here by the quarantine workflow when they:" >> agents/invalid/README.md
-            echo "1. Failed validation checks" >> agents/invalid/README.md
-            echo "2. Were pushed directly to the main branch" >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "## How to Fix" >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "1. Review the validation errors (available in the associated GitHub issue)" >> agents/invalid/README.md
-            echo "2. Make the necessary corrections" >> agents/invalid/README.md
-            echo "3. Create a PR with the fixed file in the main \`agents/\` directory" >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "## Naming Convention" >> agents/invalid/README.md
-            echo "" >> agents/invalid/README.md
-            echo "Files here follow the pattern: \`original_filename_TIMESTAMP.yaml\`" >> agents/invalid/README.md
-            echo "The timestamp helps avoid name collisions if the same file is quarantined multiple times." >> agents/invalid/README.md
-            echo "Created invalid directory and README.md" >> $GITHUB_STEP_SUMMARY
+            echo "Created invalid directory" >> $GITHUB_STEP_SUMMARY
           else
             echo "agents/invalid directory already exists"
           fi
@@ -305,9 +283,6 @@ jobs:
           echo "MOVED_FILES<<EOF" >> $GITHUB_ENV
           echo -e "$MOVED_FILES" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-          # Make sure the README.md is also staged if it was just created
-          git add agents/invalid/README.md
 
           # Commit the quarantined files
           git commit -m "📦 Move invalid agent files to quarantine" \
