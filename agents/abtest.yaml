@@ -21,6 +21,5 @@ system_message: |
 
 label_color: "\e[38;5;220m"
 text_color: "\e[38;5;252m"
-is_default: false
 tags:
   - spiritual
