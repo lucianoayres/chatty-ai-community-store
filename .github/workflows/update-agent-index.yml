@@ -37,7 +37,7 @@ jobs:
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No agent YAML files were changed."
-            echo "::set-output name=validation_passed::true"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
             exit 0
           fi
 
@@ -70,12 +70,12 @@ jobs:
 
           # Determine overall result
           if [ $FAIL_COUNT -gt 0 ]; then
-            echo "::set-output name=validation_passed::false"
-            echo "::set-output name=fail_count::$FAIL_COUNT"
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            echo "fail_count=$FAIL_COUNT" >> $GITHUB_OUTPUT
             echo "❌ $FAIL_COUNT agent files failed validation." | tee -a $VALIDATION_LOG
             exit 1
           else
-            echo "::set-output name=validation_passed::true"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
             echo "✅ All agent files passed validation!" | tee -a $VALIDATION_LOG
           fi
           echo "::endgroup::"
@@ -97,10 +97,10 @@ jobs:
 
           # Check if index file was modified
           if git diff --name-only | grep -q "agent_index.json"; then
-            echo "::set-output name=index_updated::true"
+            echo "index_updated=true" >> $GITHUB_OUTPUT
             echo "Agent index was updated!"
           else
-            echo "::set-output name=index_updated::false"
+            echo "index_updated=false" >> $GITHUB_OUTPUT
             echo "No changes to agent index."
           fi
           echo "::endgroup::"
