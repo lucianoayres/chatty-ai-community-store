@@ -1,4 +1,4 @@
-name: Auto-Revert Invalid Agent Files
+name: Quarantine Invalid Agent Files
 
 on:
   workflow_run:
@@ -14,8 +14,8 @@ permissions:
   pull-requests: read
 
 jobs:
-  auto-revert:
-    name: Auto-Revert Invalid Agent Files
+  quarantine-invalid:
+    name: Move Invalid Agent Files to Invalid Directory
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
 
@@ -29,27 +29,27 @@ jobs:
       - name: Verify changes in agents directory
         id: verify-changes
         run: |
-          # Just a safety check to ensure we only revert changes that affect agent files
+          # Just a safety check to ensure we only quarantine changes that affect agent files
           echo "Verifying that the changes were in the agents directory..."
 
           # Fetch the commit details from the original workflow
           COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
 
           # Check if this commit affected files in the agents directory (both .yaml and .yml extensions)
-          CHANGED_AGENT_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_SHA | grep "^agents/" | grep -E "\.(yaml|yml)$" || echo "")
+          CHANGED_AGENT_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_SHA | grep "^agents/" | grep -E "\.(yaml|yml)$" | grep -v "^agents/invalid/" || echo "")
 
           if [ -z "$CHANGED_AGENT_FILES" ]; then
-            echo "No agent YAML files were changed in this commit. Skipping revert."
-            echo "should_revert=false" >> $GITHUB_OUTPUT
+            echo "No agent YAML files were changed in this commit. Skipping quarantine."
+            echo "should_quarantine=false" >> $GITHUB_OUTPUT
           else
             echo "Found changed agent files:"
             echo "$CHANGED_AGENT_FILES"
-            echo "should_revert=true" >> $GITHUB_OUTPUT
+            echo "should_quarantine=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Download workflow logs
         id: download-logs
-        if: steps.verify-changes.outputs.should_revert == 'true'
+        if: steps.verify-changes.outputs.should_quarantine == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Check if validation failed
         id: check-validation
-        if: steps.verify-changes.outputs.should_revert == 'true'
+        if: steps.verify-changes.outputs.should_quarantine == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -157,26 +157,63 @@ jobs:
             core.setOutput('validation_failed', validationFailed);
             return validationFailed;
 
-      - name: Revert invalid commit
-        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+      - name: Create invalid directory
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+        run: |
+          # Create invalid directory if it doesn't exist
+          if [ ! -d "agents/invalid" ]; then
+            echo "Creating agents/invalid directory for the first time"
+            mkdir -p agents/invalid
+            # Add a README to explain the purpose of this directory
+            cat > agents/invalid/README.md << 'EOL'
+            # Invalid Agent Files
+
+            This directory contains agent files that failed validation but were preserved for reference.
+
+            ## Why Files are Here
+
+            Files in this directory were automatically moved here by the quarantine workflow when they:
+            1. Failed validation checks
+            2. Were pushed directly to the main branch
+            
+            ## How to Fix
+
+            1. Review the validation errors (available in the associated GitHub issue)
+            2. Make the necessary corrections
+            3. Create a PR with the fixed file in the main `agents/` directory
+
+            ## Naming Convention
+
+            Files here follow the pattern: `original_filename_TIMESTAMP.yaml`
+            The timestamp helps avoid name collisions if the same file is quarantined multiple times.
+            EOL
+          else
+            echo "agents/invalid directory already exists"
+          fi
+
+      - name: Quarantine invalid files
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Configure git
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Revert Bot"
+          git config --local user.name "GitHub Quarantine Bot"
 
-          # Get the failing commit hash
-          COMMIT_HASH=$(git rev-parse HEAD)
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          COMMIT_SHORT=$(git rev-parse --short HEAD)
+          # Get the commit info
+          COMMIT_HASH=${{ github.event.workflow_run.head_sha }}
+          COMMIT_MSG=$(git log -1 --pretty=%B $COMMIT_HASH)
+          COMMIT_SHORT=$(git rev-parse --short $COMMIT_HASH)
 
-          # Get changed files (both .yaml and .yml extensions)
-          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E "\.(yaml|yml)$" || echo "")
+          # Get changed files
+          CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r $COMMIT_HASH | grep "^agents/" | grep -E "\.(yaml|yml)$" | grep -v "^agents/invalid/" || echo "")
           if [ -n "$CHANGED_FILES" ]; then
             echo "Changed YAML files in this commit:"
             echo "$CHANGED_FILES"
             echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
             echo "$CHANGED_FILES" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
+          else
+            echo "No agent files found to quarantine. This is unexpected."
+            exit 0
           fi
 
           # Store commit info in env vars for later use
@@ -184,51 +221,95 @@ jobs:
           echo "COMMIT_SHORT=$COMMIT_SHORT" >> $GITHUB_ENV
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
 
-          # Revert the commit
-          git revert -n $COMMIT_HASH
-          git commit -m "♻️ Auto-revert: Validation failed for agent files" \
-            -m "Reverting commit $COMMIT_SHORT which contained invalid agent files." \
-            -m "See the workflow run for detailed validation errors: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          # For each invalid file, move it to the invalid directory
+          MOVED_FILES=""
+          for file in $CHANGED_FILES; do
+            # Skip if file doesn't exist (shouldn't happen, but just in case)
+            if [ ! -f "$file" ]; then
+              echo "Warning: File $file not found, skipping"
+              continue
+            fi
+            
+            filename=$(basename "$file")
+            # Add a timestamp to avoid name collisions - ensure consistent extension
+            timestamp=$(date +%Y%m%d_%H%M%S)
+            extension="${filename##*.}"
+            basename="${filename%.*}"
+            new_location="agents/invalid/${basename}_${timestamp}.${extension}"
+            
+            echo "Moving $file to $new_location"
+            cp "$file" "$new_location"
+            
+            # Add a comment to the invalid file noting why it was moved
+            echo -e "\n# File moved to invalid directory due to validation failure on $(date)" >> "$new_location"
+            echo "# Original location: $file" >> "$new_location"
+            echo "# From commit: $COMMIT_SHORT" >> "$new_location"
+            
+            # Stage the new file
+            git add "$new_location"
+            
+            # Keep track of moved files for the commit message
+            MOVED_FILES="$MOVED_FILES\n- $file → $new_location"
+          done
 
-          # Push the revert
+          # Only proceed if we actually moved files
+          if [ -z "$MOVED_FILES" ]; then
+            echo "No files were moved to quarantine. Exiting."
+            exit 0
+          fi
+
+          echo "MOVED_FILES<<EOF" >> $GITHUB_ENV
+          echo -e "$MOVED_FILES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Make sure the README.md is also staged if it was just created
+          git add agents/invalid/README.md
+
+          # Commit the quarantined files
+          git commit -m "📦 Move invalid agent files to quarantine" \
+            -m "The following files failed validation and were moved to the invalid directory:" \
+            -m "$(echo -e "$MOVED_FILES")" \
+            -m "Original commit: $COMMIT_SHORT" \
+            -m "See workflow run for details: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          # Push the changes
           git push
 
-      - name: Create issue about the revert
-        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+      - name: Create issue about quarantined files
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         run: |
           # Create issue template
           cat > issue_body.md << 'EOL'
-          ## Invalid Agent Files Automatically Reverted
+          ## Invalid Agent Files Moved to Quarantine
 
-          A direct commit to the main branch contained invalid agent files and has been automatically reverted to maintain repository integrity.
+          One or more agent YAML files that were pushed directly to the main branch failed validation and have been moved to the `agents/invalid` directory for safekeeping.
 
           ### Details
           - **Original Commit**: $COMMIT_SHORT
           - **Commit Message**: $COMMIT_MSG
           - **Validation Workflow Run**: $WORKFLOW_RUN_URL
-          - **Revert Workflow Run**: $REVERT_WORKFLOW_URL
+          - **Quarantine Action Run**: $QUARANTINE_WORKFLOW_URL
 
-          ### Changed Files
-          ```
-          $CHANGED_FILES
-          ```
+          ### Moved Files
+          $MOVED_FILES
 
           ### Validation Errors
           ```
           $ERROR_SUMMARY
           ```
 
-          ### Next Steps
-          1. Create a new branch from the current main
-          2. Add your changes with the validation issues fixed
-          3. Open a pull request for review
+          ### How to Fix
+          1. Clone the repository and check out the quarantined files in the `agents/invalid` directory
+          2. Fix the validation issues
+          3. Create a new branch with your corrected files in the proper `agents` directory
+          4. Submit a PR for review
 
           ### Need Help?
           - Review the [agent schema](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/schemas/agent.schema.yaml) for required fields
           - Check [existing agents](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/tree/main/agents) for examples
           - See the [contributing guide](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/blob/main/CONTRIBUTING.md) for more information
 
-          This automatic revert helps maintain the quality of our agent repository.
+          This automated quarantine helps maintain the quality of our agent repository while preserving your work.
           EOL
 
           # Replace variables in the template
@@ -262,20 +343,20 @@ jobs:
           ERROR_SUMMARY=$(echo "$ERROR_SUMMARY" | head -n 30)
 
           WORKFLOW_RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${{ github.event.workflow_run.id }}"
-          REVERT_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          QUARANTINE_WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
           sed -i "s|\$COMMIT_SHORT|${COMMIT_SHORT}|g" issue_body.md
           sed -i "s|\$COMMIT_MSG|${COMMIT_MSG}|g" issue_body.md
           sed -i "s|\$WORKFLOW_RUN_URL|${WORKFLOW_RUN_URL}|g" issue_body.md
-          sed -i "s|\$REVERT_WORKFLOW_URL|${REVERT_WORKFLOW_URL}|g" issue_body.md
-          sed -i "s|\$CHANGED_FILES|${CHANGED_FILES}|g" issue_body.md
+          sed -i "s|\$QUARANTINE_WORKFLOW_URL|${QUARANTINE_WORKFLOW_URL}|g" issue_body.md
+          sed -i "s|\$MOVED_FILES|${MOVED_FILES}|g" issue_body.md
 
           # Add error summary carefully to avoid sed issues with special characters
           awk -v er="$ERROR_SUMMARY" '{gsub(/\$ERROR_SUMMARY/, er)}1' issue_body.md > issue_body_with_errors.md
           mv issue_body_with_errors.md issue_body.md
 
       - name: Submit issue
-        if: steps.verify-changes.outputs.should_revert == 'true' && steps.check-validation.outputs.validation_failed == 'true'
+        if: steps.verify-changes.outputs.should_quarantine == 'true' && steps.check-validation.outputs.validation_failed == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
@@ -289,9 +370,9 @@ jobs:
             const issue = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `♻️ Invalid agent files automatically reverted (commit ${shortCommit})`,
+              title: `📦 Invalid agent files moved to quarantine (commit ${shortCommit})`,
               body: issueBody,
-              labels: ['auto-revert', 'validation-failed']
+              labels: ['quarantined', 'validation-failed', 'needs-fix']
             };
 
             try {
