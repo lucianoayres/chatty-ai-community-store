@@ -37,6 +37,7 @@ jobs:
 
       - name: Validate changed YAML files
         if: steps.changed-files.outputs.any_changed == 'true'
+        id: validation
         run: |
           echo "Validating changed YAML files:"
           echo "${{ steps.changed-files.outputs.all_changed_files }}"
@@ -44,22 +45,54 @@ jobs:
           # Create a directory for the validation results
           mkdir -p validation_results
 
-          # Initialize error flag
+          # Create a file to store validation errors for PR comment
+          echo "# Agent YAML Validation Results" > validation_results/pr_comment.md
+          echo "" >> validation_results/pr_comment.md
+
+          # Initialize error flag and counter
           ERROR_FOUND=0
+          ERROR_COUNT=0
 
           # Validate each changed file
           for file in ${{ steps.changed-files.outputs.all_changed_files }}; do
             echo "Validating $file..."
-            python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose
+            echo "## File: $file" >> validation_results/pr_comment.md
             
-            # Capture exit code
+            # Run validation and capture output
+            VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --file $file --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
             EXIT_CODE=$?
             
+            # Add validation output to PR comment
             if [ $EXIT_CODE -ne 0 ]; then
               ERROR_FOUND=1
+              ERROR_COUNT=$((ERROR_COUNT + 1))
+              echo "❌ **Validation Failed**" >> validation_results/pr_comment.md
+              echo '```' >> validation_results/pr_comment.md
+              echo "$VALIDATION_OUTPUT" >> validation_results/pr_comment.md
+              echo '```' >> validation_results/pr_comment.md
               echo "::error file=$file::Validation failed for $file"
+            else
+              echo "✅ **Validation Passed**" >> validation_results/pr_comment.md
             fi
+            echo "" >> validation_results/pr_comment.md
           done
+
+          # Add summary to PR comment
+          if [ $ERROR_FOUND -eq 1 ]; then
+            echo "## Summary" >> validation_results/pr_comment.md
+            echo "❌ **$ERROR_COUNT files failed validation**" >> validation_results/pr_comment.md
+            echo "" >> validation_results/pr_comment.md
+            echo "Please fix the issues above before merging this pull request." >> validation_results/pr_comment.md
+            
+            # Set output for next steps
+            echo "validation_status=failed" >> $GITHUB_OUTPUT
+          else
+            echo "## Summary" >> validation_results/pr_comment.md
+            echo "✅ **All files passed validation**" >> validation_results/pr_comment.md
+            
+            # Set output for next steps
+            echo "validation_status=passed" >> $GITHUB_OUTPUT
+          fi
 
           # Exit with error if any validation failed
           if [ $ERROR_FOUND -eq 1 ]; then
@@ -68,6 +101,51 @@ jobs:
 
       - name: Validate all YAML files (on PR)
         if: github.event_name == 'pull_request'
+        id: full-validation
         run: |
           echo "Validating all agent YAML files..."
-          python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose
+
+          # Run validation and capture output
+          VALIDATION_OUTPUT=$(python tools/agent_manager/src/validator.py --yaml-schema schemas/agent.schema.yaml --directory agents --tag-definitions tags.json --output-format github-actions --verbose 2>&1)
+          EXIT_CODE=$?
+
+          # Add full validation results to PR comment if it failed
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "## Full Directory Validation" >> validation_results/pr_comment.md
+            echo "❌ **Full validation of all agent files failed**" >> validation_results/pr_comment.md
+            echo '```' >> validation_results/pr_comment.md
+            echo "$VALIDATION_OUTPUT" >> validation_results/pr_comment.md
+            echo '```' >> validation_results/pr_comment.md
+            
+            # Set output for next steps
+            echo "full_validation_status=failed" >> $GITHUB_OUTPUT
+          else
+            echo "## Full Directory Validation" >> validation_results/pr_comment.md
+            echo "✅ **All agent files in the repository passed validation**" >> validation_results/pr_comment.md
+            
+            # Set output for next steps
+            echo "full_validation_status=passed" >> $GITHUB_OUTPUT
+          fi
+
+          # Exit with error if validation failed
+          if [ $EXIT_CODE -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        if: github.event_name == 'pull_request'
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: Agent YAML Validation Results
+
+      - name: Create or Update Comment
+        uses: peter-evans/create-or-update-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: validation_results/pr_comment.md
+          edit-mode: replace

@@ -19,14 +19,27 @@ The workflow:
 2. Runs the validator script on each changed file
 3. Reports any validation errors directly in the GitHub Actions interface
 4. For pull requests, also validates all YAML files in the `agents` directory
+5. Posts validation results as a comment on the pull request
 
 ### Error Reporting
 
-Validation errors are displayed:
+Validation errors are displayed in multiple ways:
 
 - Directly in the GitHub Actions workflow output
 - As annotations on the specific files with issues
+- As a detailed comment on the pull request
 - With detailed information about which fields are missing or invalid
+
+### Pull Request Comments
+
+For pull requests, the workflow will:
+
+1. Create a comment with validation results for each changed file
+2. Update the comment if the workflow runs again (rather than creating multiple comments)
+3. Include a summary of validation status
+4. Show detailed error information for any files that failed validation
+
+This makes it easy for contributors to see validation issues directly in the PR without having to navigate to the Actions tab.
 
 ### Example Error
 
